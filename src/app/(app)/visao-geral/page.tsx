@@ -1,9 +1,8 @@
-import { PageContainer, PageHeader } from "@/components/shared/page-header";
+import type { Metadata } from "next";
+import { OverviewPage } from "@/features/overview/overview-page";
+
+export const metadata: Metadata = { title: "Visão geral" };
 
 export default function Page() {
-  return (
-    <PageContainer>
-      <PageHeader title="Visão geral" description="Provisório" />
-    </PageContainer>
-  );
+  return <OverviewPage />;
 }

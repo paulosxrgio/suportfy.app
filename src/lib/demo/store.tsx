@@ -102,6 +102,7 @@ type Action =
   | { type: "conversation"; id: string; update: (c: Conversation) => Conversation; audit?: string }
   | { type: "agent"; update: (a: AgentConfig) => AgentConfig; audit?: { action: string; target: string } }
   | { type: "customerNote"; customerId: string; body: string }
+  | { type: "createConversation"; conversation: Conversation }
   | { type: "knowledge"; update: (items: KnowledgeItem[]) => KnowledgeItem[]; audit: { action: string; target: string } }
   | { type: "automations"; update: (items: Automation[]) => Automation[]; audit: { action: string; target: string } }
   | { type: "members"; update: (items: Member[]) => Member[]; audit: { action: string; target: string } }
@@ -138,6 +139,14 @@ function reducer(state: DemoState, action: Action): DemoState {
         audit: action.audit
           ? withAudit(state, action.audit, `Ticket #${current.ticketNumber} · ${customer?.name ?? "Cliente"}`)
           : state.audit,
+      };
+    }
+    case "createConversation": {
+      const customer = state.customers.find((c) => c.id === action.conversation.customerId);
+      return {
+        ...state,
+        conversations: [action.conversation, ...state.conversations],
+        audit: withAudit(state, "Criou ticket manualmente", `Ticket #${action.conversation.ticketNumber} · ${customer?.name ?? "Cliente"}`),
       };
     }
     case "agent":
@@ -381,6 +390,47 @@ function useDemoActions(dispatch: React.Dispatch<Action>, state: DemoState) {
 
       addCustomerNote: (customerId: string, body: string) => dispatch({ type: "customerNote", customerId, body }),
 
+      createTicket: (input: {
+        customerId: string;
+        storeId: string;
+        channel: Channel;
+        subject: string;
+        reason: Conversation["reason"];
+        priority: Priority;
+        description: string;
+      }): Conversation => {
+        const at = demoNowIso();
+        const ticketNumber = Math.max(0, ...state.conversations.map((c) => c.ticketNumber)) + 1;
+        const conversation: Conversation = {
+          id: uid("cv"),
+          ticketNumber,
+          customerId: input.customerId,
+          storeId: input.storeId,
+          channel: input.channel,
+          subject: input.subject,
+          reason: input.reason,
+          priority: input.priority,
+          state: "human_assigned",
+          assigneeId: CURRENT_USER_ID,
+          tags: [],
+          unreadCount: 0,
+          createdAt: at,
+          lastActivityAt: at,
+          slaDueAt: null,
+          slaPaused: false,
+          aiSummary: "Ticket criado manualmente pela equipe. Ainda não há mensagens do cliente.",
+          orderIds: [],
+          timeline: [
+            { id: uid("ev"), type: "event", kind: "assigned", at, text: "Você criou este ticket manualmente", detail: "Atribuído a você. A IA não atua em tickets criados manualmente." },
+            ...(input.description.trim()
+              ? [{ id: uid("note"), type: "note" as const, authorId: CURRENT_USER_ID, at, body: input.description.trim() }]
+              : []),
+          ],
+        };
+        dispatch({ type: "createConversation", conversation });
+        return conversation;
+      },
+
       updateAgent: (update: (a: AgentConfig) => AgentConfig, audit?: { action: string; target: string }) =>
         dispatch({ type: "agent", update, audit }),
 
@@ -538,7 +588,7 @@ function useDemoActions(dispatch: React.Dispatch<Action>, state: DemoState) {
 
       newId: uid,
     };
-  }, [dispatch, memberName, state.automations, state.knowledge, state.quickReplies, state.tags, state.templates]);
+  }, [dispatch, memberName, state.automations, state.conversations, state.knowledge, state.quickReplies, state.tags, state.templates]);
 }
 
 type DemoActions = ReturnType<typeof useDemoActions>;

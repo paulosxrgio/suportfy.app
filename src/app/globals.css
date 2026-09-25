@@ -50,6 +50,13 @@
   --color-note-200: #f2d998;
   --color-note-700: #7a5a06;
 
+  /* Gráficos: cores checadas para contraste e daltonismo sobre superfície branca. */
+  --color-chart-1: #1583a8;
+  --color-chart-1-track: #d4e9f1;
+  --color-chart-2: #eb6834;
+  --color-chart-grid: #eceef1;
+  --color-chart-axis: #cfd4da;
+
   --shadow-popover: 0 8px 24px -6px rgb(16 24 32 / 0.14), 0 0 0 1px rgb(16 24 32 / 0.06);
   --shadow-drawer: -8px 0 24px -12px rgb(16 24 32 / 0.18);
 
