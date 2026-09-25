@@ -66,6 +66,8 @@ interface DemoState {
   templates: MessageTemplate[];
   agent: AgentConfig;
   audit: AuditEntry[];
+  /** Valores salvos das seções de configurações (nunca inclui segredos). */
+  settings: Record<string, unknown>;
 }
 
 function createInitialState(): DemoState {
@@ -84,6 +86,7 @@ function createInitialState(): DemoState {
     templates: seedTemplates,
     agent: initialAgentConfig,
     audit: initialAudit,
+    settings: {},
   };
 }
 
@@ -109,7 +112,8 @@ type Action =
   | { type: "quickReplies"; update: (items: QuickReply[]) => QuickReply[]; audit: { action: string; target: string } }
   | { type: "tags"; update: (items: TagDefinition[]) => TagDefinition[]; audit: { action: string; target: string } }
   | { type: "templates"; update: (items: MessageTemplate[]) => MessageTemplate[]; audit: { action: string; target: string } }
-  | { type: "audit"; action: string; target: string };
+  | { type: "audit"; action: string; target: string }
+  | { type: "settings"; section: string; label: string; value: unknown };
 
 function withAudit(state: DemoState, action: string, target: string): AuditEntry[] {
   return [{ id: uid("audit"), at: demoNowIso(), actorId: CURRENT_USER_ID, action, target }, ...state.audit];
@@ -196,6 +200,12 @@ function reducer(state: DemoState, action: Action): DemoState {
       };
     case "audit":
       return { ...state, audit: withAudit(state, action.action, action.target) };
+    case "settings":
+      return {
+        ...state,
+        settings: { ...state.settings, [action.section]: action.value },
+        audit: withAudit(state, "Salvou configurações", action.label),
+      };
   }
 }
 
@@ -585,6 +595,8 @@ function useDemoActions(dispatch: React.Dispatch<Action>, state: DemoState) {
           update: (items) => items.filter((t) => t.id !== id),
           audit: { action: "Excluiu template", target: state.templates.find((t) => t.id === id)?.name ?? "" },
         }),
+
+      saveSettings: (section: string, label: string, value: unknown) => dispatch({ type: "settings", section, label, value }),
 
       newId: uid,
     };

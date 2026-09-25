@@ -192,7 +192,7 @@ function IntegrationRow({ icon: Icon, name, detail, href }: { icon: LucideIcon; 
         <p className="text-[13px] font-medium text-ink">{name}</p>
         <p className="truncate text-xs text-ink-3">{detail}</p>
       </div>
-      <IntegrationBadge state="nao_configurado" />
+      <IntegrationBadge state="nao_configurado" labels={name === "OpenAI" ? { nao_configurado: "Não configurada" } : undefined} />
       <Button asChild size="xs" variant="ghost">
         <Link href={href} aria-label={`Configurar ${name}`}>
           Configurar

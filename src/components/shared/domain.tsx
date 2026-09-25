@@ -204,11 +204,19 @@ export const integrationStateMeta: Record<IntegrationState, { label: string; ton
   erro: { label: "Erro", tone: "danger" },
 };
 
-export function IntegrationBadge({ state, demo }: { state: IntegrationState; demo?: boolean }) {
+export function IntegrationBadge({
+  state,
+  demo,
+  labels,
+}: {
+  state: IntegrationState;
+  demo?: boolean;
+  labels?: Partial<Record<IntegrationState, string>>;
+}) {
   const meta = integrationStateMeta[state];
   return (
     <Badge tone={meta.tone} dot>
-      {meta.label}
+      {labels?.[state] ?? meta.label}
       {demo ? " (prévia)" : ""}
     </Badge>
   );
