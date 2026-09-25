@@ -343,6 +343,7 @@ export interface AgentConfig {
   handoffOnHumanRequest: boolean;
   handoffOnNegativeSentiment: boolean;
   handoffCategories: string[];
+  handoffTeamId: string;
   knowledgeSources: Record<string, boolean>;
   shopifySources: { orders: boolean; products: boolean; customers: boolean };
 }

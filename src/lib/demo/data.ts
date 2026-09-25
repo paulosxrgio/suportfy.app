@@ -2393,6 +2393,7 @@ export const initialAgentConfig: AgentConfig = {
   handoffOnHumanRequest: true,
   handoffOnNegativeSentiment: true,
   handoffCategories: ["reembolso", "cancelamento", "alteracao_endereco", "troca", "reclamacao", "juridico", "dados_pessoais"],
+  handoffTeamId: "t-revisao",
   knowledgeSources: Object.fromEntries(knowledgeItems.map((k) => [k.id, k.status === "publicado"])),
   shopifySources: { orders: true, products: true, customers: true },
 };

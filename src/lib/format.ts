@@ -149,7 +149,9 @@ export function formatRelative(iso: string): string {
   const abs = Math.abs(diff);
   if (abs < MINUTE) return "agora";
   if (abs >= 7 * DAY) return formatDateShort(iso);
-  const label = formatDuration(abs / MINUTE);
+  // Acima de 3 horas, a precisão em minutos só atrapalha a leitura.
+  const minutes = abs / MINUTE;
+  const label = minutes >= 180 && minutes < 60 * 24 ? `${Math.round(minutes / 60)} h` : formatDuration(minutes);
   return diff > 0 ? `há ${label}` : `em ${label}`;
 }
 

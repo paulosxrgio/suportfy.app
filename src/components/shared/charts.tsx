@@ -179,11 +179,23 @@ export function StackedBars({ rows, series, format = formatNumber }: { rows: Sta
 export interface ColumnPoint {
   key: string;
   label: string;
+  /** Rótulo curto do eixo X. */
+  short?: string;
   values: number[];
 }
 
 /** Colunas empilhadas ao longo do tempo, com eixo Y em números redondos. */
-export function ColumnChart({ points, series, height = 180 }: { points: ColumnPoint[]; series: Series[]; height?: number }) {
+export function ColumnChart({
+  points,
+  series,
+  height = 180,
+  labelEvery = 1,
+}: {
+  points: ColumnPoint[];
+  series: Series[];
+  height?: number;
+  labelEvery?: number;
+}) {
   const rawMax = Math.max(1, ...points.map((p) => p.values.reduce((a, b) => a + b, 0)));
   const step = rawMax <= 10 ? 2 : rawMax <= 50 ? 10 : rawMax <= 100 ? 20 : 50;
   const max = Math.ceil(rawMax / step) * step;
@@ -251,8 +263,11 @@ export function ColumnChart({ points, series, height = 180 }: { points: ColumnPo
         </div>
         <div className="mt-1.5 flex justify-around gap-1 text-[11px] text-ink-4" aria-hidden>
           {points.map((p, i) => (
-            <span key={p.key} className={cn("w-6 text-center whitespace-nowrap", i % 2 === 1 && "max-sm:invisible")}>
-              {p.label.split(" ")[0]}
+            <span
+              key={p.key}
+              className={cn("w-6 text-center whitespace-nowrap", i % labelEvery !== 0 && "invisible", (i / labelEvery) % 2 === 1 && "max-sm:invisible")}
+            >
+              {p.short ?? p.label}
             </span>
           ))}
         </div>
@@ -287,9 +302,9 @@ export function Meter({ value, label, target }: { value: number; label: string; 
   );
 }
 
-export function SimpleTable({ headers, rows }: { headers: string[]; rows: ReactNode[][] }) {
+export function SimpleTable({ headers, rows, className }: { headers: string[]; rows: ReactNode[][]; className?: string }) {
   return (
-    <TableContainer>
+    <TableContainer className={className}>
       <Table>
         <thead>
           <tr>
