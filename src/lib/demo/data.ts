@@ -1586,7 +1586,7 @@ export const conversations: Conversation[] = [
     tags: ["pix"],
     unreadCount: 0,
     createdAt: demoTime("11:30"),
-    lastActivityAt: demoTime("11:40"),
+    lastActivityAt: demoTime("11:41"),
     slaDueAt: demoTime("15:40"),
     slaPaused: false,
     pausedBy: "u-rafael",

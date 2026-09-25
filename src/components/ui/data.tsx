@@ -114,6 +114,7 @@ export function EmptyState({
   action,
   className,
   compact,
+  titleAs: TitleTag = "p",
 }: {
   icon?: LucideIcon;
   title: ReactNode;
@@ -121,6 +122,7 @@ export function EmptyState({
   action?: ReactNode;
   className?: string;
   compact?: boolean;
+  titleAs?: "p" | "h1" | "h2";
 }) {
   return (
     <div className={cn("flex flex-col items-center justify-center text-center", compact ? "px-4 py-8" : "px-6 py-14", className)}>
@@ -129,7 +131,7 @@ export function EmptyState({
           <Icon className="size-5" aria-hidden />
         </span>
       )}
-      <p className="text-sm font-medium text-ink">{title}</p>
+      <TitleTag className="text-sm font-medium text-ink">{title}</TitleTag>
       {description && <p className="mt-1 max-w-sm text-[13px] leading-relaxed text-ink-3">{description}</p>}
       {action && <div className="mt-4 flex flex-wrap items-center justify-center gap-2">{action}</div>}
     </div>

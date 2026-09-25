@@ -20,6 +20,7 @@ export function NotFoundContent({
       title={title}
       description={description}
       className="min-h-[60vh]"
+      titleAs="h1"
       action={
         <Button asChild variant="primary" size="sm">
           <Link href={href}>{cta}</Link>
