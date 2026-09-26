@@ -190,7 +190,7 @@ function MessageBubble({
         </div>
         <div
           className={cn(
-            "relative rounded-lg border px-3 py-2 text-[13.5px] leading-relaxed whitespace-pre-line text-ink",
+            "relative rounded-2xl border px-3 py-2 text-[13.5px] leading-relaxed whitespace-pre-line text-ink",
             isCustomer && "rounded-tl-sm border-line bg-surface",
             isAi && "rounded-tr-sm border-primary-200 bg-primary-50",
             !isCustomer && !isAi && "rounded-tr-sm border-line bg-subtle",
@@ -299,7 +299,7 @@ function NoteCard({ note }: { note: NoteItem }) {
             {formatClock(note.at)}
           </time>
         </div>
-        <div className="rounded-lg rounded-tr-sm border border-dashed border-note-200 bg-note-50 px-3 py-2">
+        <div className="rounded-2xl rounded-tr-sm border border-dashed border-note-200 bg-note-50 px-3 py-2">
           <p className="mb-1 flex items-center gap-1 text-[11.5px] font-medium text-note-700">
             <Lock className="size-3" aria-hidden />
             Nota interna · visível só para a equipe

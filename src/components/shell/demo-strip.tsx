@@ -27,7 +27,7 @@ export function DemoStrip() {
         </span>
       </p>
       {(state.dataMode === "empty" || state.simulation !== "none") && (
-        <span className="hidden rounded-[5px] bg-warning-50 px-1.5 py-0.5 text-[11.5px] font-medium text-warning-700 md:inline">
+        <span className="hidden rounded-md bg-warning-50 px-1.5 py-0.5 text-[11.5px] font-medium text-warning-700 md:inline">
           {state.dataMode === "empty" ? "Visualizando conta sem dados" : "Simulação de estado ativa"}
         </span>
       )}

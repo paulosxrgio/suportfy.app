@@ -66,7 +66,7 @@ export function AgentPreview({ draft }: { draft: AgentConfig }) {
   const handoff = scenario === "sem_fonte" || scenario === "reembolso";
 
   return (
-    <section className="rounded-lg border border-line bg-surface" aria-label="Prévia de resposta">
+    <section className="rounded-2xl border border-line bg-surface" aria-label="Prévia de resposta">
       <header className="border-b border-line px-4 py-3">
         <h2 className="text-sm font-semibold text-ink">Prévia de resposta</h2>
         <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-3">
@@ -82,15 +82,15 @@ export function AgentPreview({ draft }: { draft: AgentConfig }) {
           onValueChange={setScenario}
           options={(Object.keys(scenarios) as Scenario[]).map((s) => ({ value: s, label: scenarios[s].label }))}
         />
-        <div className="rounded-lg border border-line bg-canvas p-3">
+        <div className="rounded-2xl border border-line bg-canvas p-3">
           <p className="mb-1 text-xs font-medium text-ink-3">Cliente · Aurora Cosméticos · WhatsApp</p>
-          <p className="inline-block rounded-lg rounded-tl-sm border border-line bg-surface px-3 py-2 text-[13px] text-ink">{scenarios[scenario].customer}</p>
+          <p className="inline-block rounded-2xl rounded-tl-sm border border-line bg-surface px-3 py-2 text-[13px] text-ink">{scenarios[scenario].customer}</p>
           <div className="mt-3 flex flex-col items-end">
             <p className="mb-1 flex items-center gap-1 text-xs font-medium text-primary-700">
               <Bot className="size-3.5" aria-hidden />
               {draft.name || "Agente"} · {draft.defaultMode === "copilot" ? "rascunho para aprovação" : "resposta automática"}
             </p>
-            <p className="max-w-[95%] rounded-lg rounded-tr-sm border border-primary-200 bg-primary-50 px-3 py-2 text-[13px] leading-relaxed whitespace-pre-line text-ink">
+            <p className="max-w-[95%] rounded-2xl rounded-tr-sm border border-primary-200 bg-primary-50 px-3 py-2 text-[13px] leading-relaxed whitespace-pre-line text-ink">
               {reply}
               {"\n\n"}
               <span className="text-ink-2">{signature}</span>

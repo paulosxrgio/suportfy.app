@@ -221,7 +221,7 @@ export function SlaSection() {
 
 /* ----------------------------------- Tags ----------------------------------- */
 
-const tagColors = ["#b02a20", "#875a00", "#b4577a", "#7a4fb4", "#c0802a", "#1f6a80", "#1b6f47", "#434951", "#2f7f96"];
+const tagColors = ["#b02a20", "#875a00", "#b4577a", "#7a4fb4", "#c0802a", "#2563eb", "#1b6f47", "#4b5563", "#0e7490"];
 
 export function TagsSection() {
   const { tags, allConversations } = useDataset();
@@ -387,7 +387,7 @@ export function QuickRepliesSection() {
           <EmptyState compact icon={Zap} title="Nenhuma resposta rápida" description="Crie textos prontos para as intervenções mais comuns." />
         </TableContainer>
       ) : (
-        <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+        <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
           {quickReplies.map((r) => (
             <li key={r.id} className="flex items-start gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">

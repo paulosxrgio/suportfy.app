@@ -63,7 +63,7 @@ export function RadioCard({
     <RadioPrimitive.Item
       value={value}
       disabled={disabled}
-      className="focus-ring group flex w-full items-start gap-3 rounded-lg border border-line bg-surface p-3 text-left transition-colors hover:border-line-strong data-[state=checked]:border-primary-500 data-[state=checked]:bg-primary-50/60 data-[state=checked]:ring-1 data-[state=checked]:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60"
+      className="focus-ring group flex w-full items-start gap-3 rounded-2xl border border-line bg-surface p-3 text-left transition-colors hover:border-line-strong data-[state=checked]:border-primary-500 data-[state=checked]:bg-primary-50/60 data-[state=checked]:ring-1 data-[state=checked]:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60"
     >
       <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border border-line-strong bg-surface group-data-[state=checked]:border-primary-600">
         <RadioPrimitive.Indicator className="size-2 rounded-full bg-primary-600" />
@@ -149,7 +149,7 @@ export function Segmented<T extends string>({
           value={o.value}
           disabled={o.disabled}
           className={cn(
-            "focus-ring flex items-center gap-1.5 rounded-[5px] font-medium whitespace-nowrap text-ink-3 transition-colors hover:text-ink disabled:cursor-not-allowed disabled:text-ink-4 data-[state=on]:bg-surface data-[state=on]:text-ink data-[state=on]:shadow-xs",
+            "focus-ring flex items-center gap-1.5 rounded-md font-medium whitespace-nowrap text-ink-3 transition-colors hover:text-ink disabled:cursor-not-allowed disabled:text-ink-4 data-[state=on]:bg-surface data-[state=on]:text-ink data-[state=on]:shadow-xs",
             size === "xs" ? "h-6 px-2 text-xs" : "h-7 px-2.5 text-[13px]",
           )}
         >

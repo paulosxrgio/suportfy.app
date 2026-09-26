@@ -148,7 +148,7 @@ export function ReportsPage() {
         }
       />
 
-      <div className="mb-4 flex flex-col gap-3 rounded-lg border border-line bg-surface px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-line bg-surface px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
         <FilterBar>
           <Segmented<Period>
             label="Período"
@@ -195,7 +195,7 @@ export function ReportsPage() {
           </div>
         </>
       ) : (
-        <DataGate skeleton={<div className="grid gap-4 md:grid-cols-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-56 rounded-lg" />)}</div>}>
+        <DataGate skeleton={<div className="grid gap-4 md:grid-cols-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-56 rounded-2xl" />)}</div>}>
           <Callout tone="warning" icon={FlaskConical} title="Exemplo ilustrativo" className="mb-4">
             Todos os números desta tela são inventados para mostrar o formato dos relatórios. Eles não representam nenhuma loja nem
             o desempenho de um agente real.

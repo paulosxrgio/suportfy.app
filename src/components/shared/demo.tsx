@@ -15,7 +15,7 @@ export function DemoBadge({ label = "Dados de demonstração", className }: { la
       <span
         tabIndex={0}
         className={cn(
-          "focus-ring inline-flex h-5 shrink-0 items-center gap-1 rounded-[5px] border border-dashed border-line-strong bg-surface px-1.5 text-[11.5px] font-medium whitespace-nowrap text-ink-3",
+          "focus-ring inline-flex h-5 shrink-0 items-center gap-1 rounded-md border border-dashed border-line-strong bg-surface px-1.5 text-[11.5px] font-medium whitespace-nowrap text-ink-3",
           className,
         )}
       >

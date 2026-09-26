@@ -99,7 +99,7 @@ export function CustomerProfile({ id }: { id: string }) {
                   <EmptyState compact icon={MessagesSquare} title="Sem conversas" description="Este cliente ainda não entrou em contato." />
                 </Panel>
               ) : (
-                <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+                <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
                   {conversations.map((c) => (
                     <li key={c.id}>
                       <Link href={conversationHref(c)} className="focus-ring flex items-start gap-3 px-4 py-3 hover:bg-canvas">

@@ -45,10 +45,10 @@ export function PageHeader({
           </nav>
         )}
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-xl font-semibold tracking-[-0.01em] text-ink">{title}</h1>
+          <h1 className="text-2xl font-semibold text-ink">{title}</h1>
           {meta}
         </div>
-        {description && <p className="mt-1 max-w-2xl text-[13px] text-ink-3">{description}</p>}
+        {description && <p className="mt-1 max-w-2xl text-sm text-ink-2">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </header>

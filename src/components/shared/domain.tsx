@@ -31,7 +31,7 @@ export function StoreDot({ storeId, className }: { storeId: string; className?: 
   return (
     <span
       className={cn("inline-block size-2 shrink-0 rounded-[3px]", className)}
-      style={{ backgroundColor: store?.color ?? "#959ca5" }}
+      style={{ backgroundColor: store?.color ?? "#9ca3af" }}
       aria-hidden
     />
   );
@@ -175,9 +175,9 @@ export function AssigneeLabel({ conversation, showName = true }: { conversation:
 
 export function TagChip({ name, onRemove }: { name: string; onRemove?: () => void }) {
   const { state } = useDemo();
-  const color = state.tags.find((t) => t.name === name)?.color ?? "#959ca5";
+  const color = state.tags.find((t) => t.name === name)?.color ?? "#9ca3af";
   return (
-    <span className="inline-flex h-5 max-w-full items-center gap-1 rounded-[5px] border border-line bg-surface px-1.5 text-[11.5px] text-ink-2">
+    <span className="inline-flex h-5 max-w-full items-center gap-1 rounded-md border border-line bg-surface px-1.5 text-[11.5px] text-ink-2">
       <span className="size-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} aria-hidden />
       <span className="truncate">{name}</span>
       {onRemove && (

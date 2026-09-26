@@ -15,7 +15,7 @@ export function Providers({ children }: { children: ReactNode }) {
           closeButton
           toastOptions={{
             classNames: {
-              toast: "!rounded-lg !border !border-line !bg-surface !text-ink !shadow-popover !font-sans",
+              toast: "!rounded-2xl !border !border-line !bg-surface !text-ink !shadow-popover !font-sans",
               title: "!text-[13px] !font-medium",
               description: "!text-[12.5px] !text-ink-3",
             },

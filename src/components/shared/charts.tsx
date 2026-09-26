@@ -58,7 +58,7 @@ export function ChartFrame({
 }) {
   const [view, setView] = useState<"chart" | "table">("chart");
   return (
-    <section className={cn("flex flex-col rounded-lg border border-line bg-surface", className)} aria-label={title}>
+    <section className={cn("flex flex-col rounded-2xl border border-line bg-surface", className)} aria-label={title}>
       <header className="flex flex-wrap items-start justify-between gap-2 px-4 pt-3.5">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-ink">{title}</h2>
@@ -351,7 +351,7 @@ export function StatTile({
       {detail && <p className="mt-1 text-xs text-ink-3">{detail}</p>}
     </>
   );
-  const className = "block rounded-lg border border-line bg-surface px-4 py-3.5";
+  const className = "block rounded-2xl border border-line bg-surface px-4 py-3.5";
   return href ? (
     <Link href={href} className={cn(className, "focus-ring transition-colors hover:border-line-strong")}>
       {content}

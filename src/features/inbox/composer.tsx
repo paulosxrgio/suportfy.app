@@ -157,7 +157,7 @@ function FullComposer({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-surface shadow-xs transition-colors focus-within:border-primary-500",
+        "rounded-2xl border bg-surface shadow-xs transition-colors focus-within:border-primary-500",
         isNote ? "border-note-200 bg-note-50/50 focus-within:border-note-700/40" : "border-line-strong",
       )}
     >
@@ -307,7 +307,7 @@ function DraftApproval({ conversation }: { conversation: Conversation }) {
   const id = useId();
   const edited = text.trim() !== draft.body.trim();
   return (
-    <div className="rounded-lg border border-primary-200 bg-surface shadow-xs">
+    <div className="rounded-2xl border border-primary-200 bg-surface shadow-xs">
       <div className="flex flex-wrap items-center gap-2 border-b border-primary-200/70 bg-primary-50 px-3 py-2">
         <Bot className="size-4 text-primary-700" aria-hidden />
         <p className="text-[13px] font-medium text-primary-800">Resposta preparada pela IA · aguardando aprovação</p>
@@ -422,7 +422,7 @@ export function Composer({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-line bg-surface px-3 py-2.5 shadow-xs">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-line bg-surface px-3 py-2.5 shadow-xs">
       <div className="flex min-w-0 grow basis-64 items-start gap-2">
         <span className="mt-0.5">{icon}</span>
         <div className="min-w-0">

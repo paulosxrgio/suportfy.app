@@ -28,9 +28,9 @@ Abra <http://localhost:3000>. A raiz redireciona para `/visao-geral`.
 ## Stack
 
 - Next.js 16 (App Router, Turbopack) e React 19, com TypeScript
-- Tailwind CSS 4, com tokens definidos em `src/app/globals.css`
+- Tailwind CSS 4, com tokens definidos em `src/app/globals.css` (tema claro: superfícies brancas, cinzas neutros e azul `#2563EB` como único destaque; raio de 12 px em botões e campos e de 16 px em cartões)
 - Primitivos acessíveis do Radix (`radix-ui`), ícones `lucide-react`, avisos com `sonner`
-- Fonte Geist, servida localmente pelo pacote `geist`
+- Fonte Inter, servida localmente pelo pacote `@fontsource-variable/inter` (Geist Mono para trechos monoespaçados)
 - Vitest e Testing Library para os testes
 
 ## Páginas

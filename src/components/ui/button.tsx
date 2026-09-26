@@ -10,21 +10,21 @@ const variantClasses: Record<Variant, string> = {
   primary:
     "bg-primary-600 text-white shadow-xs hover:bg-primary-700 active:bg-primary-800 disabled:bg-primary-300 disabled:text-white/90",
   secondary:
-    "border border-line-strong bg-surface text-ink shadow-xs hover:bg-subtle active:bg-muted disabled:text-ink-4 disabled:bg-surface",
+    "border border-line-strong bg-surface text-ink hover:bg-canvas active:bg-subtle disabled:text-ink-4 disabled:bg-surface",
   subtle: "bg-subtle text-ink hover:bg-muted active:bg-line disabled:text-ink-4",
   ghost: "text-ink-2 hover:bg-subtle hover:text-ink active:bg-muted disabled:text-ink-4 disabled:bg-transparent",
   danger:
-    "border border-danger-200 bg-surface text-danger-700 shadow-xs hover:bg-danger-50 active:bg-danger-50 disabled:text-ink-4 disabled:border-line",
+    "border border-danger-200 bg-surface text-danger-700 hover:bg-danger-50 active:bg-danger-50 disabled:text-ink-4 disabled:border-line",
   link: "h-auto px-0 text-primary-700 underline-offset-4 hover:underline disabled:text-ink-4",
 };
 
 const sizeClasses: Record<Size, string> = {
-  xs: "h-7 gap-1 rounded-md px-2 text-xs",
-  sm: "h-8 gap-1.5 rounded-md px-2.5 text-[13px]",
-  md: "h-9 gap-2 rounded-md px-3.5 text-sm",
-  "icon-xs": "size-7 rounded-md",
-  "icon-sm": "size-8 rounded-md",
-  icon: "size-9 rounded-md",
+  xs: "h-7 gap-1 rounded-lg px-2 text-xs",
+  sm: "h-8 gap-1.5 rounded-xl px-3 text-[13px]",
+  md: "h-9 gap-2 rounded-xl px-4 text-sm",
+  "icon-xs": "size-7 rounded-lg",
+  "icon-sm": "size-8 rounded-xl",
+  icon: "size-9 rounded-xl",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 export function TableContainer({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn("overflow-x-auto rounded-lg border border-line bg-surface scrollbar-thin", className)}>
+    <div className={cn("overflow-x-auto rounded-2xl border border-line bg-surface scrollbar-thin", className)}>
       {children}
     </div>
   );
@@ -127,7 +127,7 @@ export function EmptyState({
   return (
     <div className={cn("flex flex-col items-center justify-center text-center", compact ? "px-4 py-8" : "px-6 py-14", className)}>
       {Icon && (
-        <span className="mb-3 flex size-10 items-center justify-center rounded-lg border border-line bg-canvas text-ink-3">
+        <span className="mb-3 flex size-10 items-center justify-center rounded-xl border border-line bg-canvas text-ink-3">
           <Icon className="size-5" aria-hidden />
         </span>
       )}
@@ -171,7 +171,7 @@ export function Callout({
 }) {
   const Icon = icon ?? calloutIcons[tone];
   return (
-    <div className={cn("flex items-start gap-3 rounded-lg border px-3.5 py-3 text-[13px]", calloutClasses[tone], className)}>
+    <div className={cn("flex items-start gap-3 rounded-2xl border px-3.5 py-3 text-[13px]", calloutClasses[tone], className)}>
       <Icon data-icon className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div className="min-w-0 flex-1 leading-relaxed">
         {title && <p className="font-medium text-ink">{title}</p>}
@@ -202,7 +202,7 @@ export function Panel({
   id?: string;
 }) {
   return (
-    <section id={id} className={cn("rounded-lg border border-line bg-surface", className)} aria-label={typeof title === "string" ? title : undefined}>
+    <section id={id} className={cn("rounded-2xl border border-line bg-surface", className)} aria-label={typeof title === "string" ? title : undefined}>
       {(title || actions) && (
         <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3">
           <div className="min-w-0">

@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
+import "@fontsource-variable/inter";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
@@ -20,7 +20,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pt-BR" className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
+    <html lang="pt-BR" className={`${GeistMono.variable} antialiased`}>
       <body>
         <Providers>{children}</Providers>
       </body>

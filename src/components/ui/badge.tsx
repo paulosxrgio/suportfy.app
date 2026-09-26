@@ -33,7 +33,7 @@ export function Badge({ tone = "neutral", dot, icon, size = "sm", className, chi
   return (
     <span
       className={cn(
-        "inline-flex max-w-full shrink-0 items-center gap-1 rounded-[5px] font-medium whitespace-nowrap ring-1 ring-inset [&_svg]:size-3 [&_svg]:shrink-0",
+        "inline-flex max-w-full shrink-0 items-center gap-1 rounded-md font-medium whitespace-nowrap ring-1 ring-inset [&_svg]:size-3 [&_svg]:shrink-0",
         size === "sm" ? "h-5 px-1.5 text-[11.5px]" : "h-6 px-2 text-xs",
         toneClasses[tone],
         className,

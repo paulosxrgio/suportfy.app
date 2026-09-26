@@ -230,7 +230,7 @@ function ActiveFilterChips() {
   return (
     <div className="flex flex-wrap items-center gap-1 px-3 pb-2">
       {chips.map((c) => (
-        <span key={c.key} className="inline-flex h-6 items-center gap-1 rounded-[5px] bg-subtle pr-1 pl-2 text-xs text-ink-2">
+        <span key={c.key} className="inline-flex h-6 items-center gap-1 rounded-md bg-subtle pr-1 pl-2 text-xs text-ink-2">
           {c.label}
           <button type="button" onClick={c.remove} className="focus-ring rounded p-0.5 hover:bg-muted" aria-label={`Remover filtro ${c.label}`}>
             <X className="size-3" />

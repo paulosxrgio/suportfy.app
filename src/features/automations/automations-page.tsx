@@ -49,7 +49,7 @@ function TestDialog({ automation, onOpenChange }: { automation: Automation | nul
             Nenhuma automação é executada ou simulada ainda. Quando o motor existir, o teste mostrará quais conversas seriam
             afetadas e quais ações seriam aplicadas.
           </Callout>
-          <div className="mt-4 rounded-lg border border-line bg-canvas px-3.5 py-3 text-[13px] leading-relaxed text-ink-2">
+          <div className="mt-4 rounded-2xl border border-line bg-canvas px-3.5 py-3 text-[13px] leading-relaxed text-ink-2">
             {describeAutomation(automation)}
           </div>
         </DialogContent>
@@ -146,7 +146,7 @@ export function AutomationsPage() {
                 <Link
                   key={t.id}
                   href={`/automacoes/nova?modelo=${t.id}`}
-                  className="focus-ring rounded-lg border border-line p-3 transition-colors hover:border-line-strong hover:bg-canvas"
+                  className="focus-ring rounded-2xl border border-line p-3 transition-colors hover:border-line-strong hover:bg-canvas"
                 >
                   <span className="block text-[13px] font-medium text-ink">{t.name}</span>
                   <span className="mt-1 block text-xs leading-relaxed text-ink-3">{t.description}</span>
