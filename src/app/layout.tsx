@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
 import "@fontsource-variable/inter";
+import "@fontsource-variable/plus-jakarta-sans";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 

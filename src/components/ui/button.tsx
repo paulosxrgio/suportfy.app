@@ -19,12 +19,12 @@ const variantClasses: Record<Variant, string> = {
 };
 
 const sizeClasses: Record<Size, string> = {
-  xs: "h-7 gap-1 rounded-lg px-2 text-xs",
-  sm: "h-8 gap-1.5 rounded-xl px-3 text-[13px]",
-  md: "h-9 gap-2 rounded-xl px-4 text-sm",
-  "icon-xs": "size-7 rounded-lg",
-  "icon-sm": "size-8 rounded-xl",
-  icon: "size-9 rounded-xl",
+  xs: "h-7 gap-1 rounded-md px-2 text-xs",
+  sm: "h-8 gap-1.5 rounded-md px-3 text-[13px]",
+  md: "h-9 gap-2 rounded-md px-4 text-sm",
+  "icon-xs": "size-7 rounded-md",
+  "icon-sm": "size-8 rounded-md",
+  icon: "size-9 rounded-md",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

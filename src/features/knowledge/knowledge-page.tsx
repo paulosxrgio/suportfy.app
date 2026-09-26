@@ -128,7 +128,7 @@ function EditorDialog({
             <fieldset>
               <legend className="mb-2 text-[13px] font-medium text-ink">Origem</legend>
               <div className="grid gap-2 md:grid-cols-3">
-                <div className="flex items-start gap-2 rounded-2xl border border-primary-500 bg-primary-50/60 p-3 ring-1 ring-primary-500">
+                <div className="flex items-start gap-2 rounded-lg border border-primary-500 bg-primary-50/60 p-3 ring-1 ring-primary-500">
                   <FilePlus2 className="mt-0.5 size-4 text-primary-700" aria-hidden />
                   <span>
                     <span className="block text-[13px] font-medium text-ink">Escrever</span>
@@ -139,7 +139,7 @@ function EditorDialog({
                   { icon: Upload, title: "Enviar arquivo", hint: "PDF ou DOCX" },
                   { icon: Link2, title: "Importar de URL", hint: "Página da loja" },
                 ].map(({ icon: Icon, title: t, hint }) => (
-                  <div key={t} className="flex items-start gap-2 rounded-2xl border border-line bg-canvas p-3 opacity-70" aria-disabled>
+                  <div key={t} className="flex items-start gap-2 rounded-lg border border-line bg-canvas p-3 opacity-70" aria-disabled>
                     <Icon className="mt-0.5 size-4 text-ink-4" aria-hidden />
                     <span>
                       <span className="block text-[13px] font-medium text-ink-3">{t}</span>
@@ -264,7 +264,7 @@ function KnowledgeDetail({ item, onEdit }: { item: KnowledgeItem; onEdit: () => 
       />
       <section>
         <h3 className="mb-2 text-xs font-medium tracking-wide text-ink-3 uppercase">Conteúdo</h3>
-        <div className="rounded-2xl border border-line bg-canvas px-4 py-3 text-[13.5px] leading-relaxed whitespace-pre-line text-ink">
+        <div className="rounded-lg border border-line bg-canvas px-4 py-3 text-[13.5px] leading-relaxed whitespace-pre-line text-ink">
           {item.content}
         </div>
       </section>
@@ -404,7 +404,7 @@ export function KnowledgePage() {
         ) : (
           <div className="grid gap-4 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
             <div>
-              <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface" aria-label="Conteúdos">
+              <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface" aria-label="Conteúdos">
                 {rows.map((k) => {
                   const meta = knowledgeStatusMeta[k.status];
                   const active = selected?.id === k.id;

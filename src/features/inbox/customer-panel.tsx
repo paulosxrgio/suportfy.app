@@ -134,7 +134,7 @@ export function CustomerPanel({ conversation, onOpenOrder }: { conversation: Con
                   )}
                 >
                   <span className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-ink">{o.number}</span>
+                    <span className="font-medium text-ink tabular-nums">{o.number}</span>
                     <span className="text-ink-2 tabular-nums">{formatCurrency(orderTotal(o))}</span>
                   </span>
                   <span className="mt-0.5 block text-xs text-ink-3">

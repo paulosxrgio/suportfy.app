@@ -330,7 +330,7 @@ export function QuickRepliesSection() {
           <EmptyState compact icon={Zap} title="Nenhuma resposta rápida" description="Crie textos prontos para as intervenções mais comuns." />
         </TableContainer>
       ) : (
-        <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
+        <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
           {quickReplies.map((r) => (
             <li key={r.id} className="flex items-start gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">

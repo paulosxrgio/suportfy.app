@@ -261,7 +261,7 @@ function usePreview(c: Conversation) {
 }
 
 function ConversationItem({ conversation: c, selected }: { conversation: Conversation; selected: boolean }) {
-  const { view, hrefFor, filters } = useInbox();
+  const { view, hrefFor } = useInbox();
   const { allCustomers } = useDataset();
   const customer = allCustomers.find((cu) => cu.id === c.customerId);
   const preview = usePreview(c);
@@ -269,8 +269,8 @@ function ConversationItem({ conversation: c, selected }: { conversation: Convers
   const unread = c.unreadCount > 0;
   const PreviewIcon = preview.icon;
   const sla = slaInfo(c);
-  // O selo de estado só aparece quando o recorte ainda não diz o que a conversa é.
-  const showState = c.state === "agent_error" || (c.state === "needs_review" && filters.status !== "revisao");
+  // Casos que pedem uma pessoa sempre mostram o selo; o atendimento da IA fica discreto.
+  const showState = c.state === "agent_error" || c.state === "needs_review" || c.state === "agent_paused";
   const showSla = sla.status === "risco" || sla.status === "vencido";
   const crossChannel = view.kind !== "canal";
 
@@ -325,13 +325,13 @@ function ConversationItem({ conversation: c, selected }: { conversation: Convers
             )}
             <StoreDot storeId={c.storeId} className="size-1.5" />
             <span className="min-w-0 truncate">{store?.name}</span>
-            {(showState || showSla) && (
-              <span className="ml-auto flex shrink-0 items-center gap-1.5">
-                {showState && <StateBadge state={c.state} />}
-                {showSla && <SlaIndicator conversation={c} />}
-              </span>
-            )}
           </div>
+          {(showState || showSla) && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              {showState && <StateBadge state={c.state} />}
+              {showSla && <SlaIndicator conversation={c} />}
+            </div>
+          )}
         </div>
       </Link>
     </li>

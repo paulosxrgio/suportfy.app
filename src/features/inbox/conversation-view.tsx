@@ -95,7 +95,7 @@ function SupervisionBanner({ conversation }: { conversation: Conversation }) {
   const agentOff = agent.orgPaused || channelSetting?.paused || channelSetting?.mode === "off";
   const mode = agentModeMeta[channelSetting?.mode ?? "auto"].short.toLowerCase();
 
-  let icon = <Bot className="size-3.5 text-primary-600" aria-hidden />;
+  let icon = <Bot className="size-3.5 text-ink-3" aria-hidden />;
   let text: ReactNode;
   let details: ReactNode = null;
   let tone = "text-ink-3";
@@ -103,7 +103,7 @@ function SupervisionBanner({ conversation }: { conversation: Conversation }) {
   switch (conversation.state) {
     case "needs_review":
       icon = <Flag className="size-3.5 text-warning-700" aria-hidden />;
-      tone = "text-ink-2";
+      tone = "text-warning-700";
       text = conversation.aiDraft ? "Resposta da IA aguardando aprovação (modo copiloto)" : "A IA encaminhou esta conversa para revisão humana";
       details = conversation.handoff && (
         <>
@@ -132,7 +132,8 @@ function SupervisionBanner({ conversation }: { conversation: Conversation }) {
       );
       break;
     case "agent_paused":
-      icon = <CirclePause className="size-3.5 text-ink-3" aria-hidden />;
+      icon = <CirclePause className="size-3.5 text-warning-700" aria-hidden />;
+      tone = "text-warning-700";
       text = `IA pausada por ${member(conversation.pausedBy)}. Ninguém assumiu ainda.`;
       break;
     case "human_assigned":
@@ -161,22 +162,59 @@ function SupervisionBanner({ conversation }: { conversation: Conversation }) {
       }
   }
 
+  // Intervenção humana e erro ganham uma faixa clara; o resto fica discreto.
+  const attention = conversation.state === "needs_review" || conversation.state === "agent_paused";
+  const critical = conversation.state === "agent_error";
+  const aiAttending = !agentOff && ["ai_active", "awaiting_customer", "awaiting_order_info"].includes(conversation.state);
+
   const line = (
     <span className={cn("flex min-w-0 items-center gap-1.5", tone)}>
       {icon}
-      <span className="truncate">{text}</span>
+      <span className={cn(attention || critical ? "font-medium" : "truncate")}>{text}</span>
     </span>
   );
 
+  if (attention || critical) {
+    const bar = cn(
+      "rounded-lg border px-3 py-2 text-[13px]",
+      critical ? "border-danger-200 bg-danger-50" : "border-warning-200 bg-warning-50",
+    );
+    if (!details) return <div className={bar}>{line}</div>;
+    return (
+      <details className={cn("group", bar)}>
+        <summary className="focus-ring -m-1 flex cursor-pointer list-none items-center gap-2 rounded-md p-1 [&::-webkit-details-marker]:hidden">
+          {line}
+          <span className={cn("ml-auto shrink-0 text-xs", critical ? "text-danger-700" : "text-warning-700")}>
+            <span className="group-open:hidden">Ver motivo</span>
+            <span className="hidden group-open:inline">Ocultar</span>
+          </span>
+          <ChevronDown className={cn("size-3.5 shrink-0 transition-transform group-open:rotate-180", critical ? "text-danger-700" : "text-warning-700")} aria-hidden />
+        </summary>
+        <div className={cn("mt-2 border-t pt-2 leading-relaxed text-ink-2", critical ? "border-danger-200" : "border-warning-200")}>{details}</div>
+      </details>
+    );
+  }
+
+  if (aiAttending) {
+    return (
+      <div className="flex justify-center">
+        <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-ai-50 px-2.5 py-1 text-xs text-ai-700">
+          <Bot className="size-3.5 shrink-0" aria-hidden />
+          <span className="truncate">{text}</span>
+        </span>
+      </div>
+    );
+  }
+
   if (!details) return <div className="flex justify-center text-xs">{line}</div>;
   return (
-    <details className="group rounded-md text-xs">
+    <details className="group text-xs">
       <summary className="focus-ring mx-auto flex w-fit max-w-full cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-1 hover:bg-subtle [&::-webkit-details-marker]:hidden">
         {line}
         <span className="shrink-0 text-ink-3 group-open:hidden">· ver motivo</span>
         <ChevronDown className="size-3 shrink-0 text-ink-4 transition-transform group-open:rotate-180" aria-hidden />
       </summary>
-      <div className="mx-auto mt-2 max-w-xl rounded-md border border-line bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-ink-2">{details}</div>
+      <div className="mx-auto mt-2 max-w-xl rounded-lg border border-line bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-ink-2">{details}</div>
     </details>
   );
 }
@@ -361,7 +399,7 @@ export function ConversationView({ id }: { id: string }) {
               <StoreDot storeId={conversation.storeId} />
               <span className="truncate">{store?.name}</span>
               <span aria-hidden>·</span>
-              <span className="shrink-0">#{conversation.ticketNumber}</span>
+              <span className="shrink-0 tabular-nums">#{conversation.ticketNumber}</span>
             </p>
           </div>
           <div className="flex items-center gap-1.5">

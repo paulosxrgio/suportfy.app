@@ -10,7 +10,7 @@ export const DropdownMenuTrigger = Menu.Trigger;
 export const DropdownMenuGroup = Menu.Group;
 
 const panel =
-  "z-50 min-w-44 overflow-hidden rounded-xl bg-surface p-1 text-sm text-ink shadow-popover data-[state=open]:animate-pop-in";
+  "z-50 min-w-44 overflow-hidden rounded-lg bg-surface p-1 text-sm text-ink shadow-popover data-[state=open]:animate-pop-in";
 
 export function DropdownMenuContent({
   className,

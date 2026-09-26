@@ -17,7 +17,7 @@ export function SettingsIndex() {
             <h2 id={`grupo-${g.label}`} className="mb-2 text-xs font-medium tracking-wide text-ink-3 uppercase">
               {g.label}
             </h2>
-            <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+            <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
               {g.items.map((item) => {
                 const Icon = item.icon;
                 return (

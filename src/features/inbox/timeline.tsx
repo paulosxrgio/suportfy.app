@@ -169,7 +169,7 @@ function MessageBubble({
     <div className={cn("flex gap-2.5", isCustomer ? "justify-start" : "flex-row-reverse")}>
       <div className="mt-5 shrink-0">
         {isAi ? (
-          <span className="flex size-7 items-center justify-center rounded-full bg-primary-600 text-white" aria-hidden>
+          <span className="flex size-7 items-center justify-center rounded-full bg-ai-700 text-white" aria-hidden>
             <Bot className="size-4" />
           </span>
         ) : (
@@ -190,7 +190,7 @@ function MessageBubble({
         </div>
         <div
           className={cn(
-            "relative rounded-2xl border px-3 py-2 text-[13.5px] leading-relaxed whitespace-pre-line text-ink",
+            "relative rounded-lg border px-3 py-2 text-[13.5px] leading-relaxed whitespace-pre-line text-ink",
             isCustomer && "rounded-tl-sm border-line bg-surface",
             isAi && "rounded-tr-sm border-primary-200 bg-primary-50",
             !isCustomer && !isAi && "rounded-tr-sm border-line bg-subtle",
@@ -299,7 +299,7 @@ function NoteCard({ note }: { note: NoteItem }) {
             {formatClock(note.at)}
           </time>
         </div>
-        <div className="rounded-2xl rounded-tr-sm border border-dashed border-note-200 bg-note-50 px-3 py-2">
+        <div className="rounded-lg rounded-tr-sm border border-dashed border-note-200 bg-note-50 px-3 py-2">
           <p className="mb-1 flex items-center gap-1 text-[11.5px] font-medium text-note-700">
             <Lock className="size-3" aria-hidden />
             Nota interna · visível só para a equipe
@@ -344,7 +344,7 @@ function EventRow({ event, conversation, onOpenOrder }: { event: EventItem; conv
             "mt-px size-3.5 shrink-0",
             event.kind === "handoff" && "text-warning-700",
             event.kind === "error" && "text-danger-700",
-            (event.kind === "lookup" || event.kind === "classified" || event.kind === "draft" || event.kind === "returned_to_ai") && "text-primary-600",
+            (event.kind === "lookup" || event.kind === "classified" || event.kind === "draft" || event.kind === "returned_to_ai") && "text-ai-700",
           )}
           aria-hidden
         />
@@ -401,7 +401,7 @@ function ExecutionDetails({ events, conversation, onOpenOrder }: { events: Event
   return (
     <details className="group">
       <summary className="focus-ring mx-auto flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ink-3 hover:bg-subtle hover:text-ink-2 [&::-webkit-details-marker]:hidden">
-        <Bot className="size-3.5 text-primary-600" aria-hidden />
+        <Bot className="size-3.5 text-ai-700" aria-hidden />
         {summary}
         <span className="text-ink-4">· detalhes da execução</span>
         <ChevronDown className="size-3 text-ink-4 transition-transform group-open:rotate-180" aria-hidden />

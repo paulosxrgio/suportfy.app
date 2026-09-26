@@ -45,9 +45,9 @@ function AgentSummary() {
   const handled = conversations.filter(aiHandled).length;
 
   return (
-    <section className="rounded-2xl border border-line bg-surface" aria-label="Agente de IA">
+    <section className="rounded-lg border border-line bg-surface" aria-label="Agente de IA">
       <div className="flex flex-wrap items-start gap-4 px-4 py-4">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 ring-1 ring-primary-200">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-700 ring-1 ring-primary-200">
           <Bot className="size-5" aria-hidden />
         </span>
         <div className="min-w-0 flex-1 basis-72">
@@ -358,7 +358,7 @@ export function OverviewPage() {
       />
       <div className="space-y-4">
         <AgentSummary />
-        <DataGate skeleton={<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>}>
+        <DataGate skeleton={<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 rounded-lg" />)}</div>}>
           <Kpis />
         </DataGate>
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
