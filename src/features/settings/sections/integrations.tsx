@@ -24,7 +24,28 @@ import { Field, Input, Select } from "@/components/ui/field";
 import { Tooltip } from "@/components/ui/menu";
 import { allowedModels, type AllowedModelId } from "@/lib/ai-models";
 import { stores, useDemo } from "@/lib/demo/store";
+import { useBackend } from "@/components/backend-context";
+import { OpenAiKeyLive } from "../openai-key-live";
 import { SaveFooter, SecretField, SectionHeader, SettingRow, StatePreview, useSessionSettings, ValidatingRow } from "../common";
+
+/**
+ * Estado do canal. Com backend, vem do banco (o canal só fica "conectado"
+ * quando o servidor valida as credenciais); na demonstração, é o estado real
+ * desta versão: não conectado.
+ */
+function ChannelStatusBadge({ kind }: { kind: "whatsapp" | "email" }) {
+  const backend = useBackend();
+  if (backend.mode !== "live") return <IntegrationBadge state="nao_configurado" />;
+  const statuses = backend.channels.filter((c) => c.kind === kind).map((c) => c.status);
+  const state: IntegrationState = statuses.includes("error")
+    ? "erro"
+    : statuses.includes("connected")
+      ? "conectado"
+      : statuses.includes("pending")
+        ? "validando"
+        : "nao_configurado";
+  return <IntegrationBadge state={state} />;
+}
 
 function NotImplementedButton({ children, reason }: { children: React.ReactNode; reason: string }) {
   return (
@@ -47,8 +68,15 @@ const openAiLabels: Partial<Record<IntegrationState, string>> = {
   erro: "Erro",
 };
 
+/** Com backend: só "não configurada" ou "chave salva"; a validação é feita em "Testar conexão". */
+const liveKeyLabels: Partial<Record<IntegrationState, string>> = {
+  nao_configurado: "Não configurada",
+  conectado: "Chave salva",
+};
+
 export function AiSection() {
   const { actions } = useDemo();
+  const backend = useBackend();
   const [preview, setPreview] = useState<IntegrationState>("nao_configurado");
   const form = useSessionSettings("inteligencia-artificial", "Inteligência Artificial", {
     model: "gpt-5-mini" as AllowedModelId,
@@ -63,90 +91,105 @@ export function AiSection() {
       description: "A integração com a OpenAI ainda não foi implementada. Nenhuma requisição foi feita.",
     });
 
+  const liveKeyState: IntegrationState | null = backend.mode === "live" ? (backend.openAiKey ? "conectado" : "nao_configurado") : null;
+
   return (
     <div className="space-y-4">
-      <SectionHeader slug="inteligencia-artificial" meta={<IntegrationBadge state="nao_configurado" labels={openAiLabels} />} />
+      <SectionHeader
+        slug="inteligencia-artificial"
+        meta={<IntegrationBadge state={liveKeyState ?? "nao_configurado"} labels={liveKeyState ? liveKeyLabels : openAiLabels} />}
+      />
 
       <Panel
         title="OpenAI"
         description="Conta usada pelo agente de IA para interpretar mensagens e redigir respostas."
-        actions={<IntegrationBadge state={preview} demo={preview !== "nao_configurado"} labels={openAiLabels} />}
+        actions={
+          liveKeyState ? (
+            <IntegrationBadge state={liveKeyState} labels={liveKeyLabels} />
+          ) : (
+            <IntegrationBadge state={preview} demo={preview !== "nao_configurado"} labels={openAiLabels} />
+          )
+        }
       >
-        <div className="space-y-4">
-          <StatePreview value={preview} onChange={setPreview} states={["nao_configurado", "validando", "conectado", "erro"]} labels={openAiLabels} />
+        {liveKeyState ? (
+          <OpenAiKeyLive />
+        ) : (
+          <div className="space-y-4">
+            <StatePreview value={preview} onChange={setPreview} states={["nao_configurado", "validando", "conectado", "erro"]} labels={openAiLabels} />
 
-          {preview === "nao_configurado" && (
-            <SecretField
-              label="Chave da API"
-              placeholder="Cole aqui a chave secreta da OpenAI"
-              prefixHint="sk-"
-              auditTarget="Chave da OpenAI"
-              description="A chave será enviada ao servidor por conexão segura e nunca ficará exposta no navegador."
-            />
-          )}
+            {preview === "nao_configurado" && (
+              <SecretField
+                label="Chave da API"
+                placeholder="Cole aqui a chave secreta da OpenAI"
+                prefixHint="sk-"
+                auditTarget="Chave da OpenAI"
+                description="A chave será enviada ao servidor por conexão segura e nunca ficará exposta no navegador."
+              />
+            )}
 
-          {preview === "validando" && <ValidatingRow text="Validando a chave com a OpenAI… (prévia da interface)" />}
+            {preview === "validando" && <ValidatingRow text="Validando a chave com a OpenAI… (prévia da interface)" />}
 
-          {preview === "conectado" && (
-            <div className="flex flex-col gap-3 rounded-md border border-line px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="flex size-8 items-center justify-center rounded-md bg-success-50 text-success-700 ring-1 ring-success-200">
-                  <KeyRound className="size-4" aria-hidden />
-                </span>
-                <div>
-                  <p className="text-[13px] font-medium text-ink">Chave configurada</p>
-                  <p className="font-mono text-xs text-ink-3">sk-••••••••••••••••</p>
+            {preview === "conectado" && (
+              <div className="flex flex-col gap-3 rounded-md border border-line px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex size-8 items-center justify-center rounded-md bg-success-50 text-success-700 ring-1 ring-success-200">
+                    <KeyRound className="size-4" aria-hidden />
+                  </span>
+                  <div>
+                    <p className="text-[13px] font-medium text-ink">Chave configurada</p>
+                    <p className="font-mono text-xs text-ink-3">sk-••••••••••••••••</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" onClick={test}>
+                    <PlugZap className="size-3.5" aria-hidden />
+                    Testar conexão
+                  </Button>
+                  <Button size="sm" onClick={() => setPreview("nao_configurado")}>
+                    <RefreshCw className="size-3.5" aria-hidden />
+                    Substituir
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => {
+                      setPreview("nao_configurado");
+                      actions.log("Removeu chave (prévia, nada armazenado)", "Chave da OpenAI");
+                      toast.success("Prévia: chave removida", { description: "Nenhuma chave existia de fato nesta demonstração." });
+                    }}
+                  >
+                    <Trash2 className="size-3.5" aria-hidden />
+                    Remover
+                  </Button>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" onClick={test}>
+            )}
+
+            {preview === "erro" && (
+              <Callout
+                tone="danger"
+                title="A OpenAI recusou a chave"
+                action={
+                  <Button size="xs" onClick={() => setPreview("nao_configurado")}>
+                    Substituir chave
+                  </Button>
+                }
+              >
+                Exemplo de mensagem de erro: a chave pode ter sido revogada ou pertencer a outro projeto. O agente fica pausado até
+                uma chave válida ser configurada. (Prévia da interface.)
+              </Callout>
+            )}
+
+            {preview === "nao_configurado" && (
+              <div className="flex items-center gap-2">
+                <NotImplementedButton reason="Configure uma chave para testar. A integração ainda não foi implementada.">
                   <PlugZap className="size-3.5" aria-hidden />
                   Testar conexão
-                </Button>
-                <Button size="sm" onClick={() => setPreview("nao_configurado")}>
-                  <RefreshCw className="size-3.5" aria-hidden />
-                  Substituir
-                </Button>
-                <Button
-                  size="sm"
-                  variant="danger"
-                  onClick={() => {
-                    setPreview("nao_configurado");
-                    actions.log("Removeu chave (prévia, nada armazenado)", "Chave da OpenAI");
-                    toast.success("Prévia: chave removida", { description: "Nenhuma chave existia de fato nesta demonstração." });
-                  }}
-                >
-                  <Trash2 className="size-3.5" aria-hidden />
-                  Remover
-                </Button>
+                </NotImplementedButton>
               </div>
-            </div>
-          )}
-
-          {preview === "erro" && (
-            <Callout
-              tone="danger"
-              title="A OpenAI recusou a chave"
-              action={
-                <Button size="xs" onClick={() => setPreview("nao_configurado")}>
-                  Substituir chave
-                </Button>
-              }
-            >
-              Exemplo de mensagem de erro: a chave pode ter sido revogada ou pertencer a outro projeto. O agente fica pausado até
-              uma chave válida ser configurada. (Prévia da interface.)
-            </Callout>
-          )}
-
-          {preview === "nao_configurado" && (
-            <div className="flex items-center gap-2">
-              <NotImplementedButton reason="Configure uma chave para testar. A integração ainda não foi implementada.">
-                <PlugZap className="size-3.5" aria-hidden />
-                Testar conexão
-              </NotImplementedButton>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </Panel>
 
       <Panel title="Como a chave será tratada">
@@ -165,10 +208,24 @@ export function AiSection() {
             </li>
           ))}
         </ul>
-        <Callout tone="warning" className="mt-4">
-          Nesta etapa só existe a interface. Nenhuma chave é enviada ou armazenada, e o agente não se conecta à OpenAI.
-        </Callout>
+        {liveKeyState ? (
+          <Callout tone="info" className="mt-4">
+            Com o servidor configurado, a chave é cifrada com AES-256-GCM, amarrada à sua organização e usada só pelo backend. O agente
+            ainda não atende clientes: os canais estão desconectados e a IA começa desligada.
+          </Callout>
+        ) : (
+          <Callout tone="warning" className="mt-4">
+            Nesta etapa só existe a interface. Nenhuma chave é enviada ou armazenada, e o agente não se conecta à OpenAI.
+          </Callout>
+        )}
       </Panel>
+
+      {liveKeyState && (
+        <Callout tone="neutral" title="Modelo e limites ainda são demonstração">
+          As opções abaixo ficam salvas só nesta sessão. No servidor valem os padrões seguros: GPT-5 mini, até US$ 5 por dia por loja e no
+          máximo 6 respostas da IA por conversa a cada hora.
+        </Callout>
+      )}
 
       <Panel title="Modelo" description="Opções permitidas pela aplicação. A escolha será validada no servidor.">
         <RadioGroup value={form.value.model} onValueChange={(v) => form.set("model", v as AllowedModelId)} className="grid gap-2" aria-label="Modelo">
@@ -299,7 +356,7 @@ export function WhatsAppSection() {
   const form = useSessionSettings("whatsapp", "WhatsApp", { serverUrl: "", instancePrefix: "suportfy" });
   return (
     <div className="space-y-4">
-      <SectionHeader slug="whatsapp" meta={<IntegrationBadge state="nao_configurado" />} />
+      <SectionHeader slug="whatsapp" meta={<ChannelStatusBadge kind="whatsapp" />} />
       <Panel title="Servidor da Evolution API" description="Onde as instâncias do WhatsApp de cada loja vão rodar.">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="URL do servidor" description="Endereço HTTPS da sua instalação da Evolution API.">
@@ -359,7 +416,7 @@ export function EmailSection() {
   });
   return (
     <div className="space-y-4">
-      <SectionHeader slug="email" meta={<IntegrationBadge state="nao_configurado" />} />
+      <SectionHeader slug="email" meta={<ChannelStatusBadge kind="email" />} />
       <Panel title="Envio via Resend">
         <SecretField label="Chave da API do Resend" prefixHint="re_" auditTarget="Chave do Resend" description="Usada somente pelo servidor para enviar e-mails." />
       </Panel>

@@ -22,6 +22,16 @@ Plataforma de atendimento automatizado por IA para lojas Shopify. Nesta fase o r
 - Datas e horários passam por `src/lib/format.ts`, que é determinístico (fuso de São Paulo, "agora" fixo da demonstração) para evitar divergência de hidratação.
 - Cores e espaçamentos vêm dos tokens em `src/app/globals.css`. Tema claro apenas.
 
+## Backend
+
+- Código de servidor fica em `src/server/` e começa com `import "server-only"`. Nada de `NEXT_PUBLIC_` para segredos.
+- Acesso a dados de usuário sempre por `withTenant(db, userId, …)` (RLS ativo). `withSystem` só em login, webhooks, segredos e pipeline do agente, filtrando pela loja.
+- Migrations são imutáveis depois de aplicadas: correções entram em um arquivo novo em `db/migrations`.
+- Segredos: `setSecret`/`readSecretForServerUse`. Nunca devolva o valor à interface nem o registre em logs (nem em mensagens de erro).
+- O atendimento é feito pela IA. Não crie atribuição a pessoas, transferência nem fila de operadores.
+- Não marque canal como conectado sem validar credenciais com o provedor.
+- Testes de integração usam `TEST_DATABASE_URL` e criam um banco descartável por arquivo.
+
 ## Onde fica cada coisa
 
 - Rotas: `src/app/(app)/…`. Cada página delega para um componente em `src/features/<área>/`.
@@ -31,7 +41,7 @@ Plataforma de atendimento automatizado por IA para lojas Shopify. Nesta fase o r
 ## Antes de enviar mudanças
 
 ```bash
-npm run check   # lint, typecheck e testes
+npm run check   # lint, typecheck e testes (com TEST_DATABASE_URL, inclui integração)
 npm run build
 git diff --check
 ```

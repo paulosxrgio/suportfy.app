@@ -31,6 +31,9 @@ import {
 import { organization } from "@/lib/demo/data";
 import { roleMeta } from "@/lib/demo/labels";
 import { CURRENT_USER_ID, stores, useDemo } from "@/lib/demo/store";
+import { signOutAction } from "@/app/actions/auth";
+import { useBackend } from "@/components/backend-context";
+import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { isActivePath, navGroups, type NavItem } from "./nav-config";
@@ -39,14 +42,17 @@ const triggerBase =
   "focus-ring flex w-full items-center gap-2 rounded-md text-left transition-colors hover:bg-subtle data-[state=open]:bg-subtle";
 
 function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
+  const backend = useBackend();
+  const orgName = backend.mode === "live" ? (backend.org?.name ?? "Sem organização") : organization.name;
+  const orgDetail = backend.mode === "live" ? "Organização" : `Organização · ${organization.plan}`;
   const trigger = (
-    <DropdownMenuTrigger className={cn(triggerBase, collapsed ? "size-9 justify-center" : "px-2 py-1.5")} aria-label={`Organização: ${organization.name}`}>
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-ink text-[10.5px] font-semibold text-white">GH</span>
+    <DropdownMenuTrigger className={cn(triggerBase, collapsed ? "size-9 justify-center" : "px-2 py-1.5")} aria-label={`Organização: ${orgName}`}>
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-ink text-[10.5px] font-semibold text-white">{initials(orgName)}</span>
       {!collapsed && (
         <>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[13px] font-medium text-ink">{organization.name}</span>
-            <span className="block truncate text-[11.5px] text-ink-3">Organização · {organization.plan}</span>
+            <span className="block truncate text-[13px] font-medium text-ink">{orgName}</span>
+            <span className="block truncate text-[11.5px] text-ink-3">{orgDetail}</span>
           </span>
           <ChevronsUpDown className="size-3.5 text-ink-4" aria-hidden />
         </>
@@ -55,7 +61,7 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
   );
   return (
     <DropdownMenu>
-      {collapsed ? <Tooltip content={organization.name} side="right">{trigger}</Tooltip> : trigger}
+      {collapsed ? <Tooltip content={orgName} side="right">{trigger}</Tooltip> : trigger}
       <DropdownMenuContent className="w-64" side={collapsed ? "right" : "bottom"}>
         <DropdownMenuLabel>Organizações</DropdownMenuLabel>
         <DropdownMenuItem>
@@ -85,7 +91,54 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+/** Lojas reais da organização (com backend). A troca entre lojas chega com a Inbox real. */
+function LiveStoreSwitcher({ collapsed, stores: liveStores }: { collapsed: boolean; stores: { id: string; name: string }[] }) {
+  const label = liveStores[0]?.name ?? "Nenhuma loja";
+  const trigger = (
+    <DropdownMenuTrigger
+      className={cn(triggerBase, "border border-line bg-surface", collapsed ? "size-9 justify-center" : "h-9 px-2.5")}
+      aria-label={`Loja: ${label}`}
+    >
+      <StoreIcon className="size-4 shrink-0 text-ink-3" aria-hidden />
+      {!collapsed && (
+        <>
+          <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{label}</span>
+          <ChevronsUpDown className="size-3.5 text-ink-4" aria-hidden />
+        </>
+      )}
+    </DropdownMenuTrigger>
+  );
+  return (
+    <DropdownMenu>
+      {collapsed ? <Tooltip content={`Loja: ${label}`} side="right">{trigger}</Tooltip> : trigger}
+      <DropdownMenuContent className="w-60" side={collapsed ? "right" : "bottom"}>
+        <DropdownMenuLabel>Lojas da organização</DropdownMenuLabel>
+        {liveStores.map((s, i) => (
+          <DropdownMenuItem key={s.id} disabled={i > 0}>
+            <StoreIcon aria-hidden />
+            <span className="flex-1">{s.name}</span>
+            {i === 0 && <Check className="text-primary-600!" aria-label="Selecionada" />}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/configuracoes/lojas">
+            <Settings aria-hidden />
+            Gerenciar lojas
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function StoreSwitcher({ collapsed }: { collapsed: boolean }) {
+  const backend = useBackend();
+  if (backend.mode === "live") return <LiveStoreSwitcher collapsed={collapsed} stores={backend.stores} />;
+  return <DemoStoreSwitcher collapsed={collapsed} />;
+}
+
+function DemoStoreSwitcher({ collapsed }: { collapsed: boolean }) {
   const { state, actions } = useDemo();
   const current = stores.find((s) => s.id === state.store);
   const label = current ? current.name : "Todas as lojas";
@@ -136,6 +189,8 @@ function StoreSwitcher({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+const liveRoleLabels = { owner: "Proprietário", admin: "Administrador", member: "Membro" } as const;
+
 function signOutNotice() {
   toast.info("Sair não está disponível", {
     description: "Esta versão é uma demonstração sem autenticação. Não há sessão para encerrar.",
@@ -143,10 +198,11 @@ function signOutNotice() {
 }
 
 function SignOutButton({ collapsed }: { collapsed: boolean }) {
+  const live = useBackend().mode === "live";
   const button = (
     <button
-      type="button"
-      onClick={signOutNotice}
+      type={live ? "submit" : "button"}
+      onClick={live ? undefined : signOutNotice}
       aria-label={collapsed ? "Sair" : undefined}
       className={cn(
         "focus-ring flex h-8 items-center gap-2.5 rounded-md text-[13.5px] text-ink-2 transition-colors hover:bg-subtle hover:text-ink",
@@ -157,18 +213,25 @@ function SignOutButton({ collapsed }: { collapsed: boolean }) {
       {!collapsed && "Sair"}
     </button>
   );
-  return collapsed ? (
+  const control = collapsed ? (
     <Tooltip content="Sair" side="right">
       {button}
     </Tooltip>
   ) : (
     button
   );
+  // Com backend, encerra a sessão no servidor; na demonstração só explica.
+  return live ? <form action={signOutAction}>{control}</form> : control;
 }
 
 function UserMenu({ collapsed }: { collapsed: boolean }) {
   const { state } = useDemo();
-  const me = state.members.find((m) => m.id === CURRENT_USER_ID)!;
+  const backend = useBackend();
+  const demoMe = state.members.find((m) => m.id === CURRENT_USER_ID)!;
+  const me =
+    backend.mode === "live"
+      ? { name: backend.user.name, email: backend.user.email, roleLabel: backend.org ? liveRoleLabels[backend.org.role] : "Sem organização" }
+      : { name: demoMe.name, email: demoMe.email, roleLabel: roleMeta[demoMe.role].label };
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={cn(triggerBase, collapsed ? "size-9 justify-center" : "px-2 py-1.5")} aria-label={`Conta de ${me.name}`}>
@@ -176,7 +239,7 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
         {!collapsed && (
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[13px] font-medium text-ink">{me.name}</span>
-            <span className="block truncate text-[11.5px] text-ink-3">{roleMeta[me.role].label}</span>
+            <span className="block truncate text-[11.5px] text-ink-3">{me.roleLabel}</span>
           </span>
         )}
       </DropdownMenuTrigger>
