@@ -38,8 +38,8 @@ Abra <http://localhost:3000>. A raiz redireciona para `/visao-geral`.
 | Rota | Conteúdo |
 | --- | --- |
 | `/visao-geral` | Resumo do agente, indicadores, exceções que pedem atenção, estado real das integrações (nenhuma conectada), conversas por canal e atividade recente |
-| `/inbox/…` (Conversas) | Navegação inspirada no Chatwoot. No menu lateral, **Conversas** traz Todas, Menções, Participando e Não atribuídas, e **Canais** separa **WhatsApp** e **E-mail**, cada um com Todas as conversas, Não lidas, Aguardando resposta e Resolvidas. A lista fica no centro, com busca, filtros e abas de supervisão (Revisão, Com a IA, Equipe, Todas); a conversa abre na área principal; o painel do cliente e dos pedidos pode ser recolhido. Rotas: `/inbox`, `/inbox/mencoes`, `/inbox/whatsapp/nao-lidas`, `/inbox/email/conversa/cv-02` etc. |
-| `/tickets` | Tabela com busca, filtros (status, prioridade, loja, canal, categoria, responsável), ordenação, detalhe em painel e criação manual |
+| `/inbox`, `/inbox/whatsapp`, `/inbox/email` | Tela central. No menu, a Inbox tem WhatsApp e E-mail como subitens; `/inbox` reúne os dois canais. A lista tem busca, um seletor de recorte (Para revisar, Com a IA, Com a equipe, Abertas, Não lidas, Aguardando resposta, Resolvidas, Menções, Participando, Não atribuídas, Todas) e filtros por prioridade, responsável, tags e loja. A conversa (`/inbox/<canal>/conversa/<id>`) ocupa a área principal: o estado da IA aparece numa linha discreta, e motivo do encaminhamento, detalhes da execução e fontes ficam recolhidos. O painel do cliente e dos pedidos pode ser recolhido. |
+| `/tickets` | Fora do menu (são as mesmas conversas da Inbox); acessível pelo menu "…" da lista e por "Ver ticket" na conversa. Tabela com busca, filtros (status, prioridade, loja, canal, categoria, responsável), ordenação, detalhe em painel e criação manual |
 | `/clientes` e `/clientes/[id]` | Lista com busca por nome, e-mail ou telefone, e perfil com conversas, pedidos e observações |
 | `/pedidos` | Pedidos com filtros e detalhe (itens, endereço parcialmente oculto, pagamento, rastreio e ações bloqueadas) |
 | `/automacoes`, `/automacoes/nova`, `/automacoes/[id]` | Lista de regras e construtor com gatilho, condições e ações |
@@ -75,7 +75,7 @@ src/
   components/
     ui/                 Primitivos: botão, badge, campos, diálogos, drawer, menus, abas, tabela, estados
     shared/             Componentes de domínio: filtros, gráficos, selos de estado, cabeçalho de página
-    shell/              Barra lateral, seletores de organização e loja, faixa da demonstração
+    shell/              Barra lateral (grupos Atendimento e Operação), seletores de organização e loja, faixa da demonstração
   features/             Uma pasta por área (inbox, tickets, customers, orders, agent, knowledge,
                         automations, reports, team, settings, overview)
   lib/

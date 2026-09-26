@@ -8,29 +8,25 @@ import {
   inQueue,
   inView,
   sortConversations,
-  viewHasQueues,
   type InboxFilters,
-  type InboxQueue,
   type InboxSort,
   type InboxView,
 } from "@/lib/demo/selectors";
-import { CURRENT_USER_ID, useDataset } from "@/lib/demo/store";
+import { useDataset } from "@/lib/demo/store";
 import type { Conversation } from "@/lib/demo/types";
 import { cn } from "@/lib/utils";
 import { ConversationList } from "./conversation-list";
-import { useViewContext } from "./use-views";
+import { useInboxLookup } from "./use-views";
 import { conversationPath, parseInboxPath, viewPath } from "./views";
 
 interface InboxContextValue {
   view: InboxView;
-  /** Mostra as abas de supervisão (Revisão, Com a IA, Equipe, Todas). */
-  hasQueues: boolean;
   filters: InboxFilters;
   setFilters: (update: (f: InboxFilters) => InboxFilters) => void;
   sort: InboxSort;
   setSort: (sort: InboxSort) => void;
   visible: Conversation[];
-  /** Conversas da visão que passam pelos filtros, ignorando a aba selecionada (para as contagens). */
+  /** Conversas do canal que passam pelos filtros, ignorando o recorte (para as contagens do seletor). */
   filteredAll: Conversation[];
   selectedId?: string;
   listHref: string;
@@ -51,33 +47,24 @@ export function InboxShell({ children }: { children: ReactNode }) {
   const route = useMemo(() => parseInboxPath(path ? path.split("/") : []), [path]);
   const view: InboxView = useMemo(() => route?.view ?? { kind: "todas" }, [route]);
   const selectedId = route?.conversationId;
-  const { conversations, allCustomers } = useDataset();
-  const viewCtx = useViewContext();
+  const { conversations } = useDataset();
+  const lookup = useInboxLookup();
 
-  // Abre na aba de revisão, exceto quando a conversa aberta pelo link está fora dela.
+  // Abre em "Para revisar", exceto quando a conversa aberta pelo link está fora desse recorte.
   const [filters, setFiltersState] = useState<InboxFilters>(() => {
     const selected = conversations.find((c) => c.id === selectedId);
     const hasReview = conversations.some((c) => inQueue(c, "revisao"));
-    const queue: InboxQueue = hasReview && (!selected || inQueue(selected, "revisao")) ? "revisao" : "todas";
-    return { ...emptyInboxFilters, queue };
+    const status = hasReview && (!selected || inQueue(selected, "revisao")) ? "revisao" : "abertas";
+    return { ...emptyInboxFilters, status };
   });
   const [sort, setSort] = useState<InboxSort>("prioridade");
 
   const value = useMemo<InboxContextValue>(() => {
-    const lookup = {
-      customerName: (id: string) => allCustomers.find((c) => c.id === id)?.name ?? "",
-      currentUserId: CURRENT_USER_ID,
-    };
-    const hasQueues = viewHasQueues(view);
-    const inside = conversations.filter((c) => inView(c, view, viewCtx));
-    const filteredAll = filterConversations(inside, filters, lookup, { ignoreQueue: true });
-    const visible = sortConversations(
-      hasQueues ? filteredAll.filter((c) => inQueue(c, filters.queue)) : filteredAll,
-      sort,
-    );
+    const inside = conversations.filter((c) => inView(c, view));
+    const filteredAll = filterConversations(inside, filters, lookup, { ignoreStatus: true });
+    const visible = sortConversations(filterConversations(filteredAll, filters, lookup), sort);
     return {
       view,
-      hasQueues,
       filters,
       setFilters: (update) => setFiltersState(update),
       sort,
@@ -88,7 +75,7 @@ export function InboxShell({ children }: { children: ReactNode }) {
       listHref: viewPath(view),
       hrefFor: (id) => conversationPath(view, id),
     };
-  }, [allCustomers, conversations, filters, sort, selectedId, view, viewCtx]);
+  }, [conversations, filters, lookup, sort, selectedId, view]);
 
   return (
     <InboxContext.Provider value={value}>

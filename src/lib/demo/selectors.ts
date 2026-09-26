@@ -72,26 +72,41 @@ export function inQueue(conversation: Conversation, queue: InboxQueue): boolean 
 
 export type AssigneeFilter = "ai" | "me" | "unassigned" | string;
 
+/**
+ * Recorte da lista da Inbox. Fica dentro da página, num único seletor, em vez
+ * de uma pasta por estado no menu lateral.
+ */
+export type InboxStatus =
+  | "revisao"
+  | "ia"
+  | "equipe"
+  | "abertas"
+  | "nao-lidas"
+  | "aguardando"
+  | "resolvidas"
+  | "mencoes"
+  | "participando"
+  | "nao-atribuidas"
+  | "todas";
+
 export interface InboxFilters {
   query: string;
-  queue: InboxQueue;
-  states: ConversationState[];
+  status: InboxStatus;
   channels: Channel[];
   stores: string[];
   assignees: AssigneeFilter[];
   priorities: Priority[];
-  unreadOnly: boolean;
+  tags: string[];
 }
 
 export const emptyInboxFilters: InboxFilters = {
   query: "",
-  queue: "todas",
-  states: [],
+  status: "todas",
   channels: [],
   stores: [],
   assignees: [],
   priorities: [],
-  unreadOnly: false,
+  tags: [],
 };
 
 export function isAiHandled(conversation: Conversation): boolean {
@@ -105,19 +120,25 @@ export function matchesAssignee(conversation: Conversation, filter: AssigneeFilt
   return conversation.assigneeId === filter;
 }
 
+export interface InboxLookup {
+  customerName: (id: string) => string;
+  currentUserId: string;
+  /** Primeiro nome de quem está usando, para reconhecer "@Nome" nas notas. */
+  currentUserFirstName: string;
+}
+
 export function filterConversations(
   conversations: Conversation[],
   filters: InboxFilters,
-  lookup: { customerName: (id: string) => string; currentUserId: string },
-  options: { ignoreQueue?: boolean } = {},
+  lookup: InboxLookup,
+  options: { ignoreStatus?: boolean } = {},
 ): Conversation[] {
   return conversations.filter((c) => {
-    if (!options.ignoreQueue && !inQueue(c, filters.queue)) return false;
-    if (filters.states.length && !filters.states.includes(c.state)) return false;
+    if (!options.ignoreStatus && !inStatus(c, filters.status, lookup)) return false;
     if (filters.channels.length && !filters.channels.includes(c.channel)) return false;
     if (filters.stores.length && !filters.stores.includes(c.storeId)) return false;
     if (filters.priorities.length && !filters.priorities.includes(c.priority)) return false;
-    if (filters.unreadOnly && c.unreadCount === 0) return false;
+    if (filters.tags.length && !filters.tags.some((t) => c.tags.includes(t))) return false;
     if (
       filters.assignees.length &&
       !filters.assignees.some((a) => matchesAssignee(c, a, lookup.currentUserId))
@@ -212,22 +233,13 @@ export function isToday(iso: string): boolean {
   return Math.floor((Date.parse(iso) + offset) / day) === Math.floor((DEMO_NOW + offset) / day);
 }
 
-/* ---------- Visões da navegação de conversas ---------- */
+/* ---------- Canais e recortes da Inbox ---------- */
 
-/** Recortes de um canal, no mesmo espírito das pastas do menu lateral. */
-export type ChannelFolder = "todas" | "nao-lidas" | "aguardando" | "resolvidas";
+/** O que o menu lateral escolhe: todos os canais ou um canal. */
+export type InboxView = { kind: "todas" } | { kind: "canal"; channel: Channel };
 
-export type InboxView =
-  | { kind: "todas" }
-  | { kind: "mencoes" }
-  | { kind: "participando" }
-  | { kind: "nao-atribuidas" }
-  | { kind: "canal"; channel: Channel; folder: ChannelFolder };
-
-export interface ViewContext {
-  currentUserId: string;
-  /** Primeiro nome de quem está usando, para reconhecer "@Nome" nas notas. */
-  currentUserFirstName: string;
+export function inView(conversation: Conversation, view: InboxView): boolean {
+  return view.kind === "todas" || conversation.channel === view.channel;
 }
 
 const RESOLVED_STATES: ConversationState[] = ["auto_resolved", "resolved"];
@@ -239,6 +251,7 @@ export function isResolved(conversation: Conversation): boolean {
 }
 
 export function mentionsUser(conversation: Conversation, firstName: string): boolean {
+  if (!firstName) return false;
   const pattern = new RegExp(`@${firstName}\\b`, "i");
   return conversation.timeline.some((t) => t.type === "note" && pattern.test(t.body));
 }
@@ -258,33 +271,30 @@ export function isAwaitingReply(conversation: Conversation): boolean {
   return last?.type === "message" && last.author === "customer";
 }
 
-export function inView(conversation: Conversation, view: InboxView, ctx: ViewContext): boolean {
-  switch (view.kind) {
-    case "todas":
-      return true;
+export function inStatus(
+  conversation: Conversation,
+  status: InboxStatus,
+  ctx: Pick<InboxLookup, "currentUserId" | "currentUserFirstName">,
+): boolean {
+  switch (status) {
+    case "revisao":
+    case "ia":
+    case "equipe":
+    case "resolvidas":
+      return inQueue(conversation, status);
+    case "abertas":
+      return !isResolved(conversation);
+    case "nao-lidas":
+      return conversation.unreadCount > 0;
+    case "aguardando":
+      return isAwaitingReply(conversation);
     case "mencoes":
       return mentionsUser(conversation, ctx.currentUserFirstName);
     case "participando":
       return isParticipating(conversation, ctx.currentUserId);
     case "nao-atribuidas":
       return conversation.assigneeId === null && NEEDS_HUMAN_STATES.includes(conversation.state);
-    case "canal": {
-      if (conversation.channel !== view.channel) return false;
-      switch (view.folder) {
-        case "todas":
-          return true;
-        case "nao-lidas":
-          return conversation.unreadCount > 0;
-        case "aguardando":
-          return isAwaitingReply(conversation);
-        case "resolvidas":
-          return isResolved(conversation);
-      }
-    }
+    case "todas":
+      return true;
   }
-}
-
-/** Visões em que as abas de supervisão (Revisão, Com a IA, Equipe, Todas) fazem sentido. */
-export function viewHasQueues(view: InboxView): boolean {
-  return view.kind === "todas" || (view.kind === "canal" && view.folder === "todas");
 }

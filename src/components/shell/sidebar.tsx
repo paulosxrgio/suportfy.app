@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bell,
-  Bot,
   Building2,
   Check,
   ChevronsUpDown,
@@ -32,11 +31,10 @@ import {
 } from "@/components/ui/menu";
 import { organization } from "@/lib/demo/data";
 import { roleMeta } from "@/lib/demo/labels";
-import { CURRENT_USER_ID, stores, useDataset, useDemo } from "@/lib/demo/store";
+import { CURRENT_USER_ID, stores, useDemo } from "@/lib/demo/store";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
-import { ConversationNav } from "./conversation-nav";
-import { isActivePath, navItems } from "./nav-config";
+import { isActivePath, navGroups, type NavItem } from "./nav-config";
 
 const triggerBase =
   "focus-ring flex w-full items-center gap-2 rounded-md text-left transition-colors hover:bg-subtle data-[state=open]:bg-subtle";
@@ -139,41 +137,34 @@ function StoreSwitcher({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-function AgentStatus({ collapsed }: { collapsed: boolean }) {
-  const { agent } = useDataset();
-  const channels = Object.values(agent.channels).flatMap((c) => Object.values(c));
-  const auto = channels.filter((c) => c.mode === "auto" && !c.paused).length;
-  const copilot = channels.filter((c) => c.mode === "copilot" && !c.paused).length;
-  const label = agent.orgPaused ? "Pausado na organização" : `Automático em ${auto} de ${channels.length} canais`;
-  const detail = copilot > 0 && !agent.orgPaused ? `${label}; copiloto em ${copilot}` : label;
-  const content = (
-    <Link
-      href="/agente"
+function signOutNotice() {
+  toast.info("Sair não está disponível", {
+    description: "Esta versão é uma demonstração sem autenticação. Não há sessão para encerrar.",
+  });
+}
+
+function SignOutButton({ collapsed }: { collapsed: boolean }) {
+  const button = (
+    <button
+      type="button"
+      onClick={signOutNotice}
+      aria-label={collapsed ? "Sair" : undefined}
       className={cn(
-        "focus-ring flex items-center gap-2 rounded-md border border-line bg-surface transition-colors hover:border-line-strong",
-        collapsed ? "size-9 justify-center" : "px-2.5 py-2",
+        "focus-ring flex h-8 items-center gap-2.5 rounded-md text-[13.5px] text-ink-2 transition-colors hover:bg-subtle hover:text-ink",
+        collapsed ? "w-9 justify-center" : "w-full px-2",
       )}
-      aria-label={`Agente de IA: ${detail} (configuração demonstrativa)`}
     >
-      <span className="relative">
-        <Bot className="size-4 text-primary-700" aria-hidden />
-        <span
-          className={cn(
-            "absolute -right-0.5 -bottom-0.5 size-2 rounded-full ring-2 ring-surface",
-            agent.orgPaused ? "bg-ink-4" : "bg-primary-500",
-          )}
-          aria-hidden
-        />
-      </span>
-      {!collapsed && (
-        <span className="min-w-0 flex-1">
-          <span className="block text-[12.5px] font-medium text-ink">Agente de IA</span>
-          <span className="block truncate text-[11.5px] text-ink-3">{label}</span>
-        </span>
-      )}
-    </Link>
+      <LogOut className="size-4 shrink-0 text-ink-3" aria-hidden />
+      {!collapsed && "Sair"}
+    </button>
   );
-  return <Tooltip content={`${detail}. Configuração demonstrativa.`} side="right">{content}</Tooltip>;
+  return collapsed ? (
+    <Tooltip content="Sair" side="right">
+      {button}
+    </Tooltip>
+  ) : (
+    button
+  );
 }
 
 function UserMenu({ collapsed }: { collapsed: boolean }) {
@@ -199,7 +190,7 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
         <DropdownMenuItem asChild>
           <Link href="/equipe">
             <CircleUser aria-hidden />
-            Meu acesso na equipe
+            Minha conta e acesso
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -214,19 +205,58 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
             Configurações
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={() =>
-            toast.info("Sair não está disponível", {
-              description: "Esta versão é uma demonstração sem autenticação. Não há sessão para encerrar.",
-            })
-          }
-        >
-          <LogOut aria-hidden />
-          Sair
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/**
+ * Um item ativo por vez: dentro da Inbox, o canal aberto fica marcado e o item
+ * "Inbox" só fica marcado na visão com todos os canais.
+ */
+function isItemActive(pathname: string, item: NavItem): boolean {
+  if (item.children) return pathname === item.href || (isActivePath(pathname, item.href) && !item.children.some((c) => isActivePath(pathname, c.href)));
+  return isActivePath(pathname, item.href);
+}
+
+function NavLink({
+  item,
+  pathname,
+  collapsed,
+  onNavigate,
+  sub = false,
+}: {
+  item: NavItem;
+  pathname: string;
+  collapsed: boolean;
+  onNavigate?: () => void;
+  sub?: boolean;
+}) {
+  const active = collapsed && item.children ? isActivePath(pathname, item.href) : isItemActive(pathname, item);
+  const Icon = item.icon;
+  const link = (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      aria-label={collapsed ? item.label : undefined}
+      className={cn(
+        "focus-ring flex items-center gap-2.5 rounded-md transition-colors",
+        sub ? "h-7 px-2 text-[13px]" : "h-8 text-[13.5px]",
+        !sub && (collapsed ? "w-9 justify-center" : "px-2"),
+        active ? "bg-primary-50 font-medium text-primary-800" : "text-ink-2 hover:bg-subtle hover:text-ink",
+      )}
+    >
+      <Icon className={cn("shrink-0", sub ? "size-3.5" : "size-4", active ? "text-primary-600" : "text-ink-3")} aria-hidden />
+      {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+    </Link>
+  );
+  return collapsed ? (
+    <Tooltip content={item.label} side="right">
+      {link}
+    </Tooltip>
+  ) : (
+    link
   );
 }
 
@@ -241,8 +271,6 @@ export function SidebarContent({
 }) {
   const pathname = usePathname();
   const { actions } = useDemo();
-  const { conversations } = useDataset();
-  const reviewCount = conversations.filter((c) => c.state === "needs_review" || c.state === "agent_error").length;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -272,51 +300,36 @@ export function SidebarContent({
       </div>
 
       <nav aria-label="Navegação principal" className={cn("min-h-0 flex-1 overflow-y-auto pb-3 scrollbar-thin", collapsed ? "px-2" : "px-3")}>
-        <ul className="flex flex-col gap-0.5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            if (item.conversations && !collapsed) {
-              return <ConversationNav key={item.href} icon={Icon} onNavigate={onNavigate} />;
-            }
-            const active = isActivePath(pathname, item.href);
-            const badge = item.conversations && reviewCount > 0 ? reviewCount : null;
-            const link = (
-              <Link
-                href={item.href}
-                onClick={onNavigate}
-                aria-current={active ? "page" : undefined}
-                aria-label={collapsed ? `${item.label}${badge ? `, ${badge} para revisar` : ""}` : undefined}
-                className={cn(
-                  "focus-ring relative flex h-8 items-center gap-2.5 rounded-md text-[13.5px] transition-colors",
-                  collapsed ? "w-9 justify-center" : "px-2",
-                  active ? "bg-primary-50 font-medium text-primary-800" : "text-ink-2 hover:bg-subtle hover:text-ink",
-                )}
-              >
-                <Icon className={cn("size-4 shrink-0", active ? "text-primary-600" : "text-ink-3")} aria-hidden />
-                {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
-                {badge !== null && (
-                  <span className="absolute top-1 right-1 size-2 rounded-full bg-warning-500 ring-2 ring-surface" aria-hidden />
-                )}
-              </Link>
-            );
-            return (
-              <li key={item.href}>
-                {collapsed ? (
-                  <Tooltip content={item.label} side="right">
-                    {link}
-                  </Tooltip>
-                ) : (
-                  link
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        {navGroups.map((group, gi) => (
+          <div key={group.label} className={cn(gi > 0 && "mt-5")}>
+            {collapsed ? (
+              gi > 0 && <div className="mx-auto mb-3 h-px w-6 bg-line" aria-hidden />
+            ) : (
+              <p className="mb-1 px-2 text-[11px] font-medium tracking-wider text-ink-4 uppercase">{group.label}</p>
+            )}
+            <ul className="flex flex-col gap-0.5" aria-label={group.label}>
+              {group.items.map((item) => (
+                <li key={item.href}>
+                  <NavLink item={item} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />
+                  {item.children && !collapsed && (
+                    <ul className="mt-0.5 ml-[17px] flex flex-col gap-0.5 border-l border-line pl-2" aria-label={`Canais da ${item.label}`}>
+                      {item.children.map((child) => (
+                        <li key={child.href}>
+                          <NavLink item={child} pathname={pathname} collapsed={false} onNavigate={onNavigate} sub />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
 
-      <div className={cn("flex shrink-0 flex-col gap-2 border-t border-line py-3", collapsed ? "items-center px-2" : "px-3")}>
-        <AgentStatus collapsed={collapsed} />
+      <div className={cn("flex shrink-0 flex-col gap-0.5 border-t border-line py-2", collapsed ? "items-center px-2" : "px-3")}>
         <UserMenu collapsed={collapsed} />
+        <SignOutButton collapsed={collapsed} />
       </div>
     </div>
   );

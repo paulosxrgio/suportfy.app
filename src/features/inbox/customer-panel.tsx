@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bot, ChevronDown, Mail, MapPin, Phone, Plus, Sparkles } from "lucide-react";
+import { ChevronDown, Mail, MapPin, Phone, Plus, Sparkles } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { DemoBadge } from "@/components/shared/demo";
@@ -113,15 +113,6 @@ export function CustomerPanel({ conversation, onOpenOrder }: { conversation: Con
             Motivo: <span className="font-medium text-ink-2">{reasonLabels[conversation.reason]}</span>
           </p>
           <p className="leading-relaxed text-ink-2">{conversation.aiSummary}</p>
-          {conversation.aiSuggestion && (
-            <div className="rounded-md border border-primary-200 bg-primary-50/70 px-3 py-2">
-              <p className="mb-0.5 flex items-center gap-1 text-xs font-medium text-primary-800">
-                <Bot className="size-3.5" aria-hidden />
-                Sugestão do agente · não executada
-              </p>
-              <p className="leading-relaxed text-ink-2">{conversation.aiSuggestion}</p>
-            </div>
-          )}
         </div>
       </PanelSection>
 
