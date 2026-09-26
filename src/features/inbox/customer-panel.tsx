@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bot, ChevronDown, Mail, MapPin, Phone, Plus, Sparkles } from "lucide-react";
+import { ChevronDown, Mail, MapPin, Phone, Plus, Sparkles } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { DemoBadge } from "@/components/shared/demo";
@@ -25,6 +25,7 @@ import type { Conversation } from "@/lib/demo/types";
 import { formatCurrency, formatDateShort, formatDateTime, formatListTime, maskEmail, maskPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { OrderStatusBadges } from "@/features/orders/order-detail";
+import { conversationHref } from "./views";
 
 function PanelSection({ title, action, children, defaultOpen = true }: { title: string; action?: ReactNode; children: ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -112,15 +113,6 @@ export function CustomerPanel({ conversation, onOpenOrder }: { conversation: Con
             Motivo: <span className="font-medium text-ink-2">{reasonLabels[conversation.reason]}</span>
           </p>
           <p className="leading-relaxed text-ink-2">{conversation.aiSummary}</p>
-          {conversation.aiSuggestion && (
-            <div className="rounded-md border border-primary-200 bg-primary-50/70 px-3 py-2">
-              <p className="mb-0.5 flex items-center gap-1 text-xs font-medium text-primary-800">
-                <Bot className="size-3.5" aria-hidden />
-                Sugestão do agente · não executada
-              </p>
-              <p className="leading-relaxed text-ink-2">{conversation.aiSuggestion}</p>
-            </div>
-          )}
         </div>
       </PanelSection>
 
@@ -142,7 +134,7 @@ export function CustomerPanel({ conversation, onOpenOrder }: { conversation: Con
                   )}
                 >
                   <span className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-ink">{o.number}</span>
+                    <span className="font-medium text-ink tabular-nums">{o.number}</span>
                     <span className="text-ink-2 tabular-nums">{formatCurrency(orderTotal(o))}</span>
                   </span>
                   <span className="mt-0.5 block text-xs text-ink-3">
@@ -216,7 +208,7 @@ export function CustomerPanel({ conversation, onOpenOrder }: { conversation: Con
           <ul className="-mx-2 space-y-0.5">
             {history.map((h) => (
               <li key={h.id}>
-                <Link href={`/inbox/${h.id}`} className="focus-ring block rounded-md px-2 py-1.5 hover:bg-subtle">
+                <Link href={conversationHref(h)} className="focus-ring block rounded-md px-2 py-1.5 hover:bg-subtle">
                   <span className="flex items-center justify-between gap-2">
                     <span className="truncate text-ink">{h.subject}</span>
                     <span className="shrink-0 text-xs text-ink-3">{formatListTime(h.lastActivityAt)}</span>

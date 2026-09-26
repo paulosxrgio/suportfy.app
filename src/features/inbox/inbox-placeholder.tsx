@@ -5,32 +5,25 @@ import { MessagesSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/data";
 import { inQueue, sortConversations } from "@/lib/demo/selectors";
-import { useDataset } from "@/lib/demo/store";
+import { useInbox } from "./inbox-shell";
 
 /** Área da conversa quando nenhuma está selecionada (telas largas). */
 export function InboxPlaceholder() {
-  const { conversations } = useDataset();
-  const review = sortConversations(
-    conversations.filter((c) => inQueue(c, "revisao")),
+  const { filteredAll, hrefFor } = useInbox();
+  const next = sortConversations(
+    filteredAll.filter((c) => inQueue(c, "revisao")),
     "prioridade",
-  );
-  const withAi = conversations.filter((c) => inQueue(c, "ia")).length;
+  )[0];
   return (
     <div className="flex flex-1 items-center justify-center p-6">
       <EmptyState
         icon={MessagesSquare}
         title="Selecione uma conversa"
-        description={
-          conversations.length === 0
-            ? "Sem conversas por enquanto. Quando os canais estiverem conectados, o agente de IA atende primeiro e as exceções aparecem na fila de revisão."
-            : `${review.length === 1 ? "1 conversa aguarda" : `${review.length} conversas aguardam`} revisão humana. ${
-                withAi === 1 ? "1 está" : `${withAi} estão`
-              } com o agente de IA.`
-        }
+        description="O agente de IA atende primeiro. Abra uma conversa para acompanhar, revisar ou intervir."
         action={
-          review[0] && (
+          next && (
             <Button asChild variant="primary" size="sm">
-              <Link href={`/inbox/${review[0].id}`}>Abrir a próxima revisão</Link>
+              <Link href={hrefFor(next.id)}>Abrir a próxima revisão</Link>
             </Button>
           )
         }

@@ -149,7 +149,7 @@ export function Segmented<T extends string>({
           value={o.value}
           disabled={o.disabled}
           className={cn(
-            "focus-ring flex items-center gap-1.5 rounded-[5px] font-medium whitespace-nowrap text-ink-3 transition-colors hover:text-ink disabled:cursor-not-allowed disabled:text-ink-4 data-[state=on]:bg-surface data-[state=on]:text-ink data-[state=on]:shadow-xs",
+            "focus-ring flex items-center gap-1.5 rounded-md font-medium whitespace-nowrap text-ink-3 transition-colors hover:text-ink disabled:cursor-not-allowed disabled:text-ink-4 data-[state=on]:bg-surface data-[state=on]:text-ink data-[state=on]:shadow-xs",
             size === "xs" ? "h-6 px-2 text-xs" : "h-7 px-2.5 text-[13px]",
           )}
         >

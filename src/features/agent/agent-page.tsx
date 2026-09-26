@@ -291,11 +291,7 @@ export function AgentPage() {
                 <RadioCard value="personalizado" icon={<Clock3 />} title="Personalizado" description="Janelas por dia da semana e feriados." />
               </RadioGroup>
               <p className="mt-3 text-xs text-ink-3">
-                O horário da equipe e os feriados ficam em{" "}
-                <Link href="/configuracoes/horarios" className="focus-ring rounded font-medium text-primary-700 hover:underline">
-                  Configurações › Horários
-                </Link>
-                .
+                Nesta demonstração, o horário comercial da equipe ainda não é configurável; a escolha fica salva só na sessão.
               </p>
             </Section>
           </TabsContent>

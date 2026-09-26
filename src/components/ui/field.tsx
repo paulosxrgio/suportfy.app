@@ -10,7 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const controlBase =
-  "w-full rounded-md border border-line-strong bg-surface text-sm text-ink shadow-xs transition-colors placeholder:text-ink-4 hover:border-ink-4 focus:border-primary-500 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-primary-200 disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-3 aria-invalid:border-danger-500";
+  "w-full rounded-md border border-line-strong bg-surface text-sm text-ink transition-colors placeholder:text-ink-4 hover:border-ink-4 focus:border-primary-500 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-primary-200 disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-3 aria-invalid:border-danger-500";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input(
   { className, ...props },

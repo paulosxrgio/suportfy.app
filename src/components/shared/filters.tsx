@@ -33,7 +33,7 @@ export const SearchField = forwardRef<
         value={value}
         onChange={(e) => onValueChange(e.target.value)}
         className={cn(
-          "h-8 w-full rounded-md border border-line-strong bg-surface pr-8 pl-8 text-[13px] text-ink shadow-xs placeholder:text-ink-4 hover:border-ink-4 focus:border-primary-500 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-primary-200 [&::-webkit-search-cancel-button]:hidden",
+          "h-9 w-full rounded-md border border-line-strong bg-surface pr-8 pl-8 text-[13px] text-ink placeholder:text-ink-4 hover:border-ink-4 focus:border-primary-500 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-primary-200 [&::-webkit-search-cancel-button]:hidden",
           className,
         )}
         {...props}

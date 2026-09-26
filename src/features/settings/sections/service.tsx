@@ -11,9 +11,9 @@ import { Switch } from "@/components/ui/controls";
 import { Callout, EmptyState, Panel, Table, TableContainer, Td, Th, Tr } from "@/components/ui/data";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
-import { priorityMeta, roleMeta } from "@/lib/demo/labels";
+import { roleMeta } from "@/lib/demo/labels";
 import { stores, useDataset, useDemo } from "@/lib/demo/store";
-import type { MessageTemplate, Priority, QuickReply, Role, TagDefinition } from "@/lib/demo/types";
+import type { MessageTemplate, QuickReply, Role, TagDefinition } from "@/lib/demo/types";
 import { SaveFooter, SectionHeader, SettingRow, useSessionSettings } from "../common";
 
 function GoTo({ href, children }: { href: string; children: ReactNode }) {
@@ -162,66 +162,9 @@ export function TeamSettingsSection() {
   );
 }
 
-/* ------------------------------------ SLA ----------------------------------- */
-
-export function SlaSection() {
-  const form = useSessionSettings("sla", "SLA", {
-    targets: {
-      urgente: { first: "15", resolution: "240" },
-      alta: { first: "30", resolution: "480" },
-      normal: { first: "60", resolution: "1440" },
-      baixa: { first: "240", resolution: "2880" },
-    } as Record<Priority, { first: string; resolution: string }>,
-    pauseOnCustomer: true,
-    businessHours: true,
-  });
-  const set = (p: Priority, key: "first" | "resolution", v: string) =>
-    form.set("targets", { ...form.value.targets, [p]: { ...form.value.targets[p], [key]: v.replace(/\D/g, "") } });
-  return (
-    <div className="space-y-4">
-      <SectionHeader slug="sla" />
-      <Panel title="Metas por prioridade" description="Em minutos. Valem para respostas da IA e da equipe.">
-        <TableContainer>
-          <Table className="min-w-[480px]">
-            <thead>
-              <tr>
-                <Th>Prioridade</Th>
-                <Th>Primeira resposta</Th>
-                <Th>Resolução</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {(Object.keys(priorityMeta) as Priority[]).map((p) => (
-                <Tr key={p}>
-                  <Td className="font-medium text-ink">{priorityMeta[p].label}</Td>
-                  <Td>
-                    <Input inputMode="numeric" className="h-8 w-28" value={form.value.targets[p].first} onChange={(e) => set(p, "first", e.target.value)} aria-label={`${priorityMeta[p].label}: primeira resposta em minutos`} />
-                  </Td>
-                  <Td>
-                    <Input inputMode="numeric" className="h-8 w-28" value={form.value.targets[p].resolution} onChange={(e) => set(p, "resolution", e.target.value)} aria-label={`${priorityMeta[p].label}: resolução em minutos`} />
-                  </Td>
-                </Tr>
-              ))}
-            </tbody>
-          </Table>
-        </TableContainer>
-        <div className="mt-4">
-          <SettingRow label="Pausar o SLA enquanto aguarda o cliente">
-            <Switch checked={form.value.pauseOnCustomer} onCheckedChange={(v) => form.set("pauseOnCustomer", v)} aria-label="Pausar o SLA enquanto aguarda o cliente" />
-          </SettingRow>
-          <SettingRow label="Contar apenas o horário da equipe" description="Conversas encaminhadas fora do horário começam a contar na abertura seguinte.">
-            <Switch checked={form.value.businessHours} onCheckedChange={(v) => form.set("businessHours", v)} aria-label="Contar apenas o horário da equipe" />
-          </SettingRow>
-        </div>
-        <SaveFooter dirty={form.dirty} onSave={form.save} onReset={form.reset} />
-      </Panel>
-    </div>
-  );
-}
-
 /* ----------------------------------- Tags ----------------------------------- */
 
-const tagColors = ["#b02a20", "#875a00", "#b4577a", "#7a4fb4", "#c0802a", "#1f6a80", "#1b6f47", "#434951", "#2f7f96"];
+const tagColors = ["#b02a20", "#875a00", "#b4577a", "#7a4fb4", "#c0802a", "#2563eb", "#1b6f47", "#4b5563", "#0e7490"];
 
 export function TagsSection() {
   const { tags, allConversations } = useDataset();

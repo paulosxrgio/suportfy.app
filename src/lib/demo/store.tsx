@@ -56,6 +56,8 @@ interface DemoState {
   simulation: Simulation;
   store: StoreFilter;
   sidebarCollapsed: boolean;
+  /** Painel do cliente e dos pedidos ao lado da conversa (telas largas). */
+  contactPanelOpen: boolean;
   conversations: Conversation[];
   customers: Customer[];
   knowledge: KnowledgeItem[];
@@ -76,6 +78,7 @@ function createInitialState(): DemoState {
     simulation: "none",
     store: "all",
     sidebarCollapsed: false,
+    contactPanelOpen: true,
     conversations: seedConversations,
     customers: seedCustomers,
     knowledge: seedKnowledge,
@@ -101,6 +104,7 @@ type Action =
   | { type: "setSimulation"; simulation: Simulation }
   | { type: "setStore"; store: StoreFilter }
   | { type: "setSidebarCollapsed"; collapsed: boolean }
+  | { type: "setContactPanelOpen"; open: boolean }
   | { type: "reset" }
   | { type: "conversation"; id: string; update: (c: Conversation) => Conversation; audit?: string }
   | { type: "agent"; update: (a: AgentConfig) => AgentConfig; audit?: { action: string; target: string } }
@@ -129,8 +133,10 @@ function reducer(state: DemoState, action: Action): DemoState {
       return { ...state, store: action.store };
     case "setSidebarCollapsed":
       return { ...state, sidebarCollapsed: action.collapsed };
+    case "setContactPanelOpen":
+      return { ...state, contactPanelOpen: action.open };
     case "reset":
-      return { ...createInitialState(), sidebarCollapsed: state.sidebarCollapsed };
+      return { ...createInitialState(), sidebarCollapsed: state.sidebarCollapsed, contactPanelOpen: state.contactPanelOpen };
     case "conversation": {
       const current = state.conversations.find((c) => c.id === action.id);
       if (!current) return state;
@@ -237,6 +243,7 @@ function useDemoActions(dispatch: React.Dispatch<Action>, state: DemoState) {
       setSimulation: (simulation: Simulation) => dispatch({ type: "setSimulation", simulation }),
       setStore: (store: StoreFilter) => dispatch({ type: "setStore", store }),
       setSidebarCollapsed: (collapsed: boolean) => dispatch({ type: "setSidebarCollapsed", collapsed }),
+      setContactPanelOpen: (open: boolean) => dispatch({ type: "setContactPanelOpen", open }),
       reset: () => dispatch({ type: "reset" }),
       log: (action: string, target: string) => dispatch({ type: "audit", action, target }),
 

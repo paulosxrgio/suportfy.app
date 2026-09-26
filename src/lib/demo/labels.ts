@@ -17,7 +17,7 @@ import type {
   TicketStatus,
 } from "./types";
 
-export type Tone = "neutral" | "primary" | "success" | "warning" | "danger" | "note" | "info";
+export type Tone = "neutral" | "primary" | "ai" | "success" | "warning" | "danger" | "note" | "info";
 
 export const channelLabels: Record<Channel, string> = {
   whatsapp: "WhatsApp",
@@ -27,7 +27,7 @@ export const channelLabels: Record<Channel, string> = {
 export const conversationStateMeta: Record<ConversationState, { label: string; tone: Tone; description: string }> = {
   ai_active: {
     label: "IA atendendo",
-    tone: "primary",
+    tone: "ai",
     description: "O agente de IA está conduzindo a conversa.",
   },
   awaiting_customer: {
@@ -62,7 +62,7 @@ export const conversationStateMeta: Record<ConversationState, { label: string; t
   },
   agent_paused: {
     label: "IA pausada",
-    tone: "neutral",
+    tone: "warning",
     description: "A IA foi pausada nesta conversa e ninguém a assumiu.",
   },
   agent_error: {

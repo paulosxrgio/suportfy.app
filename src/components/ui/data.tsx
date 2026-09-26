@@ -127,7 +127,7 @@ export function EmptyState({
   return (
     <div className={cn("flex flex-col items-center justify-center text-center", compact ? "px-4 py-8" : "px-6 py-14", className)}>
       {Icon && (
-        <span className="mb-3 flex size-10 items-center justify-center rounded-lg border border-line bg-canvas text-ink-3">
+        <span className="mb-3 flex size-10 items-center justify-center rounded-md border border-line bg-canvas text-ink-3">
           <Icon className="size-5" aria-hidden />
         </span>
       )}
@@ -223,7 +223,7 @@ export function DefinitionList({ items, className }: { items: { term: ReactNode;
       {items.map((item, i) => (
         <div key={i} className="contents">
           <dt className="text-ink-3">{item.term}</dt>
-          <dd className="min-w-0 text-ink">{item.value}</dd>
+          <dd className="min-w-0 text-ink tabular-nums">{item.value}</dd>
         </div>
       ))}
     </dl>

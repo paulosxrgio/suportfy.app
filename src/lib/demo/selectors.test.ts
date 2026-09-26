@@ -1,19 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { conversations, customers, orders } from "./data";
+import type { Channel } from "./types";
 import {
   customerStats,
   emptyInboxFilters,
   filterConversations,
   inQueue,
+  inStatus,
+  inView,
   orderTotal,
   slaInfo,
   sortConversations,
   ticketStatus,
+  type InboxStatus,
 } from "./selectors";
 
 const lookup = {
   customerName: (id: string) => customers.find((c) => c.id === id)?.name ?? "",
   currentUserId: "u-marina",
+  currentUserFirstName: "Marina",
 };
 const byId = (id: string) => conversations.find((c) => c.id === id)!;
 
@@ -51,7 +56,7 @@ describe("filas da Inbox", () => {
 });
 
 describe("filtros e ordenação", () => {
-  it("filtra por canal, loja, responsável e não lidas", () => {
+  it("filtra por canal, responsável, tags e não lidas", () => {
     const email = filterConversations(conversations, { ...emptyInboxFilters, channels: ["email"] }, lookup);
     expect(email.every((c) => c.channel === "email")).toBe(true);
 
@@ -62,8 +67,11 @@ describe("filtros e ordenação", () => {
     expect(ai.every((c) => c.assigneeId === null)).toBe(true);
     expect(ai.some((c) => c.state === "needs_review")).toBe(false);
 
-    const unread = filterConversations(conversations, { ...emptyInboxFilters, unreadOnly: true }, lookup);
+    const unread = filterConversations(conversations, { ...emptyInboxFilters, status: "nao-lidas" }, lookup);
     expect(unread.every((c) => c.unreadCount > 0)).toBe(true);
+
+    const tagged = filterConversations(conversations, { ...emptyInboxFilters, tags: ["procon"] }, lookup);
+    expect(tagged.map((c) => c.id)).toEqual(["cv-08"]);
   });
 
   it("busca por cliente, pedido e ticket", () => {
@@ -73,10 +81,10 @@ describe("filtros e ordenação", () => {
     expect(search("4815")).toContain("cv-11");
   });
 
-  it("respeita a fila, a menos que seja ignorada", () => {
-    const filters = { ...emptyInboxFilters, queue: "resolvidas" as const };
+  it("respeita o recorte, a menos que seja ignorado", () => {
+    const filters = { ...emptyInboxFilters, status: "resolvidas" as const };
     expect(filterConversations(conversations, filters, lookup).every((c) => inQueue(c, "resolvidas"))).toBe(true);
-    expect(filterConversations(conversations, filters, lookup, { ignoreQueue: true })).toHaveLength(conversations.length);
+    expect(filterConversations(conversations, filters, lookup, { ignoreStatus: true })).toHaveLength(conversations.length);
   });
 
   it("ordena pela urgência de supervisão", () => {
@@ -108,5 +116,44 @@ describe("clientes e pedidos", () => {
 
     const sofia = customers.find((c) => c.id === "cu-15")!;
     expect(customerStats(sofia, orders, conversations).totalSpent).toBe(0);
+  });
+});
+
+describe("canais e recortes da Inbox", () => {
+  const ids = (status: InboxStatus, channel?: Channel) =>
+    conversations
+      .filter((c) => inView(c, channel ? { kind: "canal", channel } : { kind: "todas" }) && inStatus(c, status, lookup))
+      .map((c) => c.id);
+
+  it("separa os canais sem sobreposição", () => {
+    const whatsapp = ids("todas", "whatsapp");
+    const email = ids("todas", "email");
+    expect(whatsapp.length + email.length).toBe(conversations.length);
+    expect(whatsapp.filter((id) => email.includes(id))).toEqual([]);
+  });
+
+  it("menções vêm de notas com @nome de quem está usando", () => {
+    expect(ids("mencoes")).toEqual(["cv-02"]);
+  });
+
+  it("participando inclui atribuídas e conversas com nota própria", () => {
+    expect(ids("participando").sort()).toEqual(["cv-08", "cv-11"]);
+  });
+
+  it("não atribuídas são as que esperam uma pessoa sem responsável", () => {
+    for (const id of ids("nao-atribuidas")) {
+      const c = byId(id);
+      expect(c.assigneeId, id).toBeNull();
+      expect(["needs_review", "agent_error", "agent_paused"], id).toContain(c.state);
+    }
+  });
+
+  it("abertas, resolvidas e aguardando resposta", () => {
+    expect(ids("abertas").length + ids("resolvidas").length).toBe(conversations.length);
+    for (const id of ids("resolvidas", "whatsapp")) expect(["auto_resolved", "resolved"], id).toContain(byId(id).state);
+    for (const id of ids("aguardando", "whatsapp")) {
+      const last = byId(id).timeline.filter((t) => t.type === "message").at(-1);
+      expect(last?.type === "message" && last.author, id).toBe("customer");
+    }
   });
 });

@@ -31,6 +31,7 @@ import { CURRENT_USER_ID, stores, useDataset, useDemo } from "@/lib/demo/store";
 import type { Channel, ContactReason, Conversation, Priority, TicketStatus } from "@/lib/demo/types";
 import { formatDateTime, formatListTime, matchesQuery } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { conversationHref } from "@/features/inbox/views";
 
 type SortKey = "numero" | "atualizacao" | "prioridade";
 
@@ -495,9 +496,9 @@ export function TicketsPage() {
             footer={
               <>
                 <Button asChild size="sm" variant="primary">
-                  <Link href={`/inbox/${selected.id}`}>
+                  <Link href={conversationHref(selected)}>
                     <MessagesSquare className="size-3.5" aria-hidden />
-                    Abrir conversa na Inbox
+                    Abrir conversa
                   </Link>
                 </Button>
                 <Button asChild size="sm">

@@ -5,21 +5,23 @@ import { cn } from "@/lib/utils";
 const toneClasses: Record<Tone, string> = {
   neutral: "bg-subtle text-ink-2 ring-line",
   primary: "bg-primary-50 text-primary-700 ring-primary-200",
+  ai: "bg-ai-50 text-ai-700 ring-ai-200",
   success: "bg-success-50 text-success-700 ring-success-200",
   warning: "bg-warning-50 text-warning-700 ring-warning-200",
   danger: "bg-danger-50 text-danger-700 ring-danger-200",
   note: "bg-note-50 text-note-700 ring-note-200",
-  info: "bg-[#eef2fb] text-[#2d4f96] ring-[#c9d6f2]",
+  info: "bg-subtle text-primary-700 ring-highlight",
 };
 
 const dotClasses: Record<Tone, string> = {
   neutral: "bg-ink-4",
   primary: "bg-primary-500",
+  ai: "bg-ai-500",
   success: "bg-success-500",
   warning: "bg-warning-500",
   danger: "bg-danger-500",
   note: "bg-note-700",
-  info: "bg-[#4a6fc0]",
+  info: "bg-primary-400",
 };
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -33,7 +35,7 @@ export function Badge({ tone = "neutral", dot, icon, size = "sm", className, chi
   return (
     <span
       className={cn(
-        "inline-flex max-w-full shrink-0 items-center gap-1 rounded-[5px] font-medium whitespace-nowrap ring-1 ring-inset [&_svg]:size-3 [&_svg]:shrink-0",
+        "inline-flex max-w-full shrink-0 items-center gap-1 rounded-full font-medium whitespace-nowrap ring-1 ring-inset [&_svg]:size-3 [&_svg]:shrink-0",
         size === "sm" ? "h-5 px-1.5 text-[11.5px]" : "h-6 px-2 text-xs",
         toneClasses[tone],
         className,

@@ -7,6 +7,7 @@ import {
   Bot,
   Check,
   CheckCheck,
+  ChevronDown,
   CircleAlert,
   CircleCheck,
   CirclePause,
@@ -36,7 +37,7 @@ import { Avatar } from "@/components/ui/data";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Tooltip } from "@/components/ui/menu";
 import { channelLabels, deliveryLabels } from "@/lib/demo/labels";
 import { CURRENT_USER_ID, useDemo } from "@/lib/demo/store";
-import type { Attachment, Conversation, DeliveryStatus, EventItem, MessageItem, NoteItem, Source } from "@/lib/demo/types";
+import type { Attachment, Conversation, DeliveryStatus, EventItem, MessageItem, NoteItem, Source, TimelineItem } from "@/lib/demo/types";
 import { dayKey, formatClock, formatDayLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -168,7 +169,7 @@ function MessageBubble({
     <div className={cn("flex gap-2.5", isCustomer ? "justify-start" : "flex-row-reverse")}>
       <div className="mt-5 shrink-0">
         {isAi ? (
-          <span className="flex size-7 items-center justify-center rounded-full bg-primary-600 text-white" aria-hidden>
+          <span className="flex size-7 items-center justify-center rounded-full bg-ai-700 text-white" aria-hidden>
             <Bot className="size-4" />
           </span>
         ) : (
@@ -333,8 +334,8 @@ function EventRow({ event, conversation, onOpenOrder }: { event: EventItem; conv
       <div
         className={cn(
           "flex max-w-full items-start gap-2 rounded-md px-2.5 py-1.5 text-xs",
-          event.kind === "handoff" && "border border-warning-200 bg-warning-50",
-          event.kind === "error" && "border border-danger-200 bg-danger-50",
+          event.kind === "handoff" && "bg-warning-50/70",
+          event.kind === "error" && "bg-danger-50/70",
           !emphasis && "text-ink-3",
         )}
       >
@@ -343,7 +344,7 @@ function EventRow({ event, conversation, onOpenOrder }: { event: EventItem; conv
             "mt-px size-3.5 shrink-0",
             event.kind === "handoff" && "text-warning-700",
             event.kind === "error" && "text-danger-700",
-            (event.kind === "lookup" || event.kind === "classified" || event.kind === "draft" || event.kind === "returned_to_ai") && "text-primary-600",
+            (event.kind === "lookup" || event.kind === "classified" || event.kind === "draft" || event.kind === "returned_to_ai") && "text-ai-700",
           )}
           aria-hidden
         />
@@ -367,6 +368,53 @@ function EventRow({ event, conversation, onOpenOrder }: { event: EventItem; conv
   );
 }
 
+/** Consultas e classificação da IA: úteis para auditar, ruidosas no dia a dia. */
+const EXECUTION_KINDS: EventItem["kind"][] = ["classified", "lookup", "draft"];
+
+type Block = { type: "item"; item: TimelineItem } | { type: "execution"; events: EventItem[] };
+
+function toBlocks(items: TimelineItem[]): Block[] {
+  const blocks: Block[] = [];
+  for (const item of items) {
+    const last = blocks.at(-1);
+    if (item.type === "event" && EXECUTION_KINDS.includes(item.kind)) {
+      if (last?.type === "execution" && dayKey(last.events[0].at) === dayKey(item.at)) last.events.push(item);
+      else blocks.push({ type: "execution", events: [item] });
+    } else {
+      blocks.push({ type: "item", item });
+    }
+  }
+  return blocks;
+}
+
+function blockAt(block: Block): string {
+  return block.type === "item" ? block.item.at : block.events[0].at;
+}
+
+function ExecutionDetails({ events, conversation, onOpenOrder }: { events: EventItem[]; conversation: Conversation; onOpenOrder: (id: string) => void }) {
+  const lookups = events.filter((e) => e.kind === "lookup").length;
+  const summary = lookups
+    ? `IA consultou ${lookups === 1 ? "1 fonte" : `${lookups} fontes`}`
+    : events.some((e) => e.kind === "draft")
+      ? "IA preparou um rascunho"
+      : "IA classificou o contato";
+  return (
+    <details className="group">
+      <summary className="focus-ring mx-auto flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ink-3 hover:bg-subtle hover:text-ink-2 [&::-webkit-details-marker]:hidden">
+        <Bot className="size-3.5 text-ai-700" aria-hidden />
+        {summary}
+        <span className="text-ink-4">· detalhes da execução</span>
+        <ChevronDown className="size-3 text-ink-4 transition-transform group-open:rotate-180" aria-hidden />
+      </summary>
+      <div className="mt-1 space-y-1">
+        {events.map((e) => (
+          <EventRow key={e.id} event={e} conversation={conversation} onOpenOrder={onOpenOrder} />
+        ))}
+      </div>
+    </details>
+  );
+}
+
 export function Timeline({
   conversation,
   onOpenOrder,
@@ -376,26 +424,31 @@ export function Timeline({
   onOpenOrder: (id: string) => void;
   onComplement: (message: MessageItem) => void;
 }) {
+  const blocks = toBlocks(conversation.timeline);
   return (
     <ol className="space-y-4" aria-label="Histórico da conversa">
-      {conversation.timeline.map((item, index) => {
-        const previous = conversation.timeline[index - 1];
-        const separator = !previous || dayKey(previous.at) !== dayKey(item.at);
+      {blocks.map((block, index) => {
+        const previous = blocks[index - 1];
+        const separator = !previous || dayKey(blockAt(previous)) !== dayKey(blockAt(block));
+        const key = block.type === "item" ? block.item.id : `exec-${block.events[0].id}`;
         return (
-          <Fragment key={item.id}>
+          <Fragment key={key}>
             {separator && (
-              <li className="flex items-center gap-3 py-1" aria-hidden={false}>
+              <li className="flex items-center gap-3 py-1">
                 <span className="h-px flex-1 bg-line" />
-                <span className="text-xs font-medium text-ink-3">{formatDayLabel(item.at)}</span>
+                <span className="text-xs font-medium text-ink-3">{formatDayLabel(blockAt(block))}</span>
                 <span className="h-px flex-1 bg-line" />
               </li>
             )}
             <li>
-              {item.type === "message" && (
-                <MessageBubble message={item} conversation={conversation} onOpenOrder={onOpenOrder} onComplement={onComplement} />
+              {block.type === "execution" && <ExecutionDetails events={block.events} conversation={conversation} onOpenOrder={onOpenOrder} />}
+              {block.type === "item" && block.item.type === "message" && (
+                <MessageBubble message={block.item} conversation={conversation} onOpenOrder={onOpenOrder} onComplement={onComplement} />
               )}
-              {item.type === "note" && <NoteCard note={item} />}
-              {item.type === "event" && <EventRow event={item} conversation={conversation} onOpenOrder={onOpenOrder} />}
+              {block.type === "item" && block.item.type === "note" && <NoteCard note={block.item} />}
+              {block.type === "item" && block.item.type === "event" && (
+                <EventRow event={block.item} conversation={conversation} onOpenOrder={onOpenOrder} />
+              )}
             </li>
           </Fragment>
         );

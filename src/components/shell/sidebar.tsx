@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bell,
-  Bot,
   Building2,
   Check,
   ChevronsUpDown,
@@ -32,23 +30,29 @@ import {
 } from "@/components/ui/menu";
 import { organization } from "@/lib/demo/data";
 import { roleMeta } from "@/lib/demo/labels";
-import { CURRENT_USER_ID, stores, useDataset, useDemo } from "@/lib/demo/store";
+import { CURRENT_USER_ID, stores, useDemo } from "@/lib/demo/store";
+import { signOutAction } from "@/app/actions/auth";
+import { useBackend } from "@/components/backend-context";
+import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
-import { isActivePath, navGroups } from "./nav-config";
+import { isActivePath, navGroups, type NavItem } from "./nav-config";
 
 const triggerBase =
   "focus-ring flex w-full items-center gap-2 rounded-md text-left transition-colors hover:bg-subtle data-[state=open]:bg-subtle";
 
 function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
+  const backend = useBackend();
+  const orgName = backend.mode === "live" ? (backend.org?.name ?? "Sem organização") : organization.name;
+  const orgDetail = backend.mode === "live" ? "Organização" : `Organização · ${organization.plan}`;
   const trigger = (
-    <DropdownMenuTrigger className={cn(triggerBase, collapsed ? "size-9 justify-center" : "px-2 py-1.5")} aria-label={`Organização: ${organization.name}`}>
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-ink text-[10.5px] font-semibold text-white">GH</span>
+    <DropdownMenuTrigger className={cn(triggerBase, collapsed ? "size-9 justify-center" : "px-2 py-1.5")} aria-label={`Organização: ${orgName}`}>
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-ink text-[10.5px] font-semibold text-white">{initials(orgName)}</span>
       {!collapsed && (
         <>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[13px] font-medium text-ink">{organization.name}</span>
-            <span className="block truncate text-[11.5px] text-ink-3">Organização · {organization.plan}</span>
+            <span className="block truncate text-[13px] font-medium text-ink">{orgName}</span>
+            <span className="block truncate text-[11.5px] text-ink-3">{orgDetail}</span>
           </span>
           <ChevronsUpDown className="size-3.5 text-ink-4" aria-hidden />
         </>
@@ -57,7 +61,7 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
   );
   return (
     <DropdownMenu>
-      {collapsed ? <Tooltip content={organization.name} side="right">{trigger}</Tooltip> : trigger}
+      {collapsed ? <Tooltip content={orgName} side="right">{trigger}</Tooltip> : trigger}
       <DropdownMenuContent className="w-64" side={collapsed ? "right" : "bottom"}>
         <DropdownMenuLabel>Organizações</DropdownMenuLabel>
         <DropdownMenuItem>
@@ -87,7 +91,54 @@ function OrgSwitcher({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+/** Lojas reais da organização (com backend). A troca entre lojas chega com a Inbox real. */
+function LiveStoreSwitcher({ collapsed, stores: liveStores }: { collapsed: boolean; stores: { id: string; name: string }[] }) {
+  const label = liveStores[0]?.name ?? "Nenhuma loja";
+  const trigger = (
+    <DropdownMenuTrigger
+      className={cn(triggerBase, "border border-line bg-surface", collapsed ? "size-9 justify-center" : "h-9 px-2.5")}
+      aria-label={`Loja: ${label}`}
+    >
+      <StoreIcon className="size-4 shrink-0 text-ink-3" aria-hidden />
+      {!collapsed && (
+        <>
+          <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{label}</span>
+          <ChevronsUpDown className="size-3.5 text-ink-4" aria-hidden />
+        </>
+      )}
+    </DropdownMenuTrigger>
+  );
+  return (
+    <DropdownMenu>
+      {collapsed ? <Tooltip content={`Loja: ${label}`} side="right">{trigger}</Tooltip> : trigger}
+      <DropdownMenuContent className="w-60" side={collapsed ? "right" : "bottom"}>
+        <DropdownMenuLabel>Lojas da organização</DropdownMenuLabel>
+        {liveStores.map((s, i) => (
+          <DropdownMenuItem key={s.id} disabled={i > 0}>
+            <StoreIcon aria-hidden />
+            <span className="flex-1">{s.name}</span>
+            {i === 0 && <Check className="text-primary-600!" aria-label="Selecionada" />}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/configuracoes/lojas">
+            <Settings aria-hidden />
+            Gerenciar lojas
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function StoreSwitcher({ collapsed }: { collapsed: boolean }) {
+  const backend = useBackend();
+  if (backend.mode === "live") return <LiveStoreSwitcher collapsed={collapsed} stores={backend.stores} />;
+  return <DemoStoreSwitcher collapsed={collapsed} />;
+}
+
+function DemoStoreSwitcher({ collapsed }: { collapsed: boolean }) {
   const { state, actions } = useDemo();
   const current = stores.find((s) => s.id === state.store);
   const label = current ? current.name : "Todas as lojas";
@@ -138,46 +189,49 @@ function StoreSwitcher({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-function AgentStatus({ collapsed }: { collapsed: boolean }) {
-  const { agent } = useDataset();
-  const channels = Object.values(agent.channels).flatMap((c) => Object.values(c));
-  const auto = channels.filter((c) => c.mode === "auto" && !c.paused).length;
-  const copilot = channels.filter((c) => c.mode === "copilot" && !c.paused).length;
-  const label = agent.orgPaused ? "Pausado na organização" : `Automático em ${auto} de ${channels.length} canais`;
-  const detail = copilot > 0 && !agent.orgPaused ? `${label}; copiloto em ${copilot}` : label;
-  const content = (
-    <Link
-      href="/agente"
+const liveRoleLabels = { owner: "Proprietário", admin: "Administrador", member: "Membro" } as const;
+
+function signOutNotice() {
+  toast.info("Sair não está disponível", {
+    description: "Esta versão é uma demonstração sem autenticação. Não há sessão para encerrar.",
+  });
+}
+
+function SignOutButton({ collapsed }: { collapsed: boolean }) {
+  const live = useBackend().mode === "live";
+  const button = (
+    <button
+      type={live ? "submit" : "button"}
+      onClick={live ? undefined : signOutNotice}
+      aria-label={collapsed ? "Sair" : undefined}
       className={cn(
-        "focus-ring flex items-center gap-2 rounded-md border border-line bg-surface transition-colors hover:border-line-strong",
-        collapsed ? "size-9 justify-center" : "px-2.5 py-2",
+        "focus-ring flex h-8 items-center gap-2.5 rounded-md text-[13.5px] text-ink-2 transition-colors hover:bg-subtle hover:text-ink",
+        collapsed ? "w-9 justify-center" : "w-full px-2",
       )}
-      aria-label={`Agente de IA: ${detail} (configuração demonstrativa)`}
     >
-      <span className="relative">
-        <Bot className="size-4 text-primary-700" aria-hidden />
-        <span
-          className={cn(
-            "absolute -right-0.5 -bottom-0.5 size-2 rounded-full ring-2 ring-surface",
-            agent.orgPaused ? "bg-ink-4" : "bg-primary-500",
-          )}
-          aria-hidden
-        />
-      </span>
-      {!collapsed && (
-        <span className="min-w-0 flex-1">
-          <span className="block text-[12.5px] font-medium text-ink">Agente de IA</span>
-          <span className="block truncate text-[11.5px] text-ink-3">{label}</span>
-        </span>
-      )}
-    </Link>
+      <LogOut className="size-4 shrink-0 text-ink-3" aria-hidden />
+      {!collapsed && "Sair"}
+    </button>
   );
-  return <Tooltip content={`${detail}. Configuração demonstrativa.`} side="right">{content}</Tooltip>;
+  const control = collapsed ? (
+    <Tooltip content="Sair" side="right">
+      {button}
+    </Tooltip>
+  ) : (
+    button
+  );
+  // Com backend, encerra a sessão no servidor; na demonstração só explica.
+  return live ? <form action={signOutAction}>{control}</form> : control;
 }
 
 function UserMenu({ collapsed }: { collapsed: boolean }) {
   const { state } = useDemo();
-  const me = state.members.find((m) => m.id === CURRENT_USER_ID)!;
+  const backend = useBackend();
+  const demoMe = state.members.find((m) => m.id === CURRENT_USER_ID)!;
+  const me =
+    backend.mode === "live"
+      ? { name: backend.user.name, email: backend.user.email, roleLabel: backend.org ? liveRoleLabels[backend.org.role] : "Sem organização" }
+      : { name: demoMe.name, email: demoMe.email, roleLabel: roleMeta[demoMe.role].label };
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={cn(triggerBase, collapsed ? "size-9 justify-center" : "px-2 py-1.5")} aria-label={`Conta de ${me.name}`}>
@@ -185,7 +239,7 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
         {!collapsed && (
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[13px] font-medium text-ink">{me.name}</span>
-            <span className="block truncate text-[11.5px] text-ink-3">{roleMeta[me.role].label}</span>
+            <span className="block truncate text-[11.5px] text-ink-3">{me.roleLabel}</span>
           </span>
         )}
       </DropdownMenuTrigger>
@@ -198,13 +252,7 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
         <DropdownMenuItem asChild>
           <Link href="/equipe">
             <CircleUser aria-hidden />
-            Meu acesso na equipe
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/configuracoes/notificacoes">
-            <Bell aria-hidden />
-            Notificações
+            Minha conta e acesso
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -213,19 +261,58 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
             Configurações
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={() =>
-            toast.info("Sair não está disponível", {
-              description: "Esta versão é uma demonstração sem autenticação. Não há sessão para encerrar.",
-            })
-          }
-        >
-          <LogOut aria-hidden />
-          Sair
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/**
+ * Um item ativo por vez: dentro da Inbox, o canal aberto fica marcado e o item
+ * "Inbox" só fica marcado na visão com todos os canais.
+ */
+function isItemActive(pathname: string, item: NavItem): boolean {
+  if (item.children) return pathname === item.href || (isActivePath(pathname, item.href) && !item.children.some((c) => isActivePath(pathname, c.href)));
+  return isActivePath(pathname, item.href) || (item.related ?? []).some((href) => isActivePath(pathname, href));
+}
+
+function NavLink({
+  item,
+  pathname,
+  collapsed,
+  onNavigate,
+  sub = false,
+}: {
+  item: NavItem;
+  pathname: string;
+  collapsed: boolean;
+  onNavigate?: () => void;
+  sub?: boolean;
+}) {
+  const active = collapsed && item.children ? isActivePath(pathname, item.href) : isItemActive(pathname, item);
+  const Icon = item.icon;
+  const link = (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      aria-label={collapsed ? item.label : undefined}
+      className={cn(
+        "focus-ring flex items-center gap-2.5 rounded-md transition-colors",
+        sub ? "h-7 px-2 text-[13px]" : "h-8 text-[13.5px]",
+        !sub && (collapsed ? "w-9 justify-center" : "px-2"),
+        active ? "bg-primary-50 font-medium text-primary-800" : "text-ink-2 hover:bg-subtle hover:text-ink",
+      )}
+    >
+      <Icon className={cn("shrink-0", sub ? "size-3.5" : "size-4", active ? "text-primary-600" : "text-ink-3")} aria-hidden />
+      {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+    </Link>
+  );
+  return collapsed ? (
+    <Tooltip content={item.label} side="right">
+      {link}
+    </Tooltip>
+  ) : (
+    link
   );
 }
 
@@ -240,8 +327,6 @@ export function SidebarContent({
 }) {
   const pathname = usePathname();
   const { actions } = useDemo();
-  const { conversations } = useDataset();
-  const reviewCount = conversations.filter((c) => c.state === "needs_review" || c.state === "agent_error").length;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -272,65 +357,35 @@ export function SidebarContent({
 
       <nav aria-label="Navegação principal" className={cn("min-h-0 flex-1 overflow-y-auto pb-3 scrollbar-thin", collapsed ? "px-2" : "px-3")}>
         {navGroups.map((group, gi) => (
-          <div key={gi} className={cn(gi > 0 && "mt-4")}>
-            {group.label &&
-              (collapsed ? (
-                <div className="mx-auto mb-2 h-px w-6 bg-line" aria-hidden />
-              ) : (
-                <p className="mb-1 px-2 text-[11.5px] font-medium text-ink-4">{group.label}</p>
-              ))}
-            <ul className="flex flex-col gap-0.5">
-              {group.items.map((item) => {
-                const active = isActivePath(pathname, item.href);
-                const Icon = item.icon;
-                const badge = item.reviewBadge && reviewCount > 0 ? reviewCount : null;
-                const link = (
-                  <Link
-                    href={item.href}
-                    onClick={onNavigate}
-                    aria-current={active ? "page" : undefined}
-                    aria-label={collapsed ? `${item.label}${badge ? `, ${badge} para revisar` : ""}` : undefined}
-                    className={cn(
-                      "focus-ring relative flex h-8 items-center gap-2.5 rounded-md text-[13.5px] transition-colors",
-                      collapsed ? "w-9 justify-center" : "px-2",
-                      active ? "bg-primary-50 font-medium text-primary-800" : "text-ink-2 hover:bg-subtle hover:text-ink",
-                    )}
-                  >
-                    <Icon className={cn("size-4 shrink-0", active ? "text-primary-600" : "text-ink-3")} aria-hidden />
-                    {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
-                    {badge !== null &&
-                      (collapsed ? (
-                        <span className="absolute top-1 right-1 size-2 rounded-full bg-warning-500 ring-2 ring-surface" aria-hidden />
-                      ) : (
-                        <span
-                          className="rounded-[5px] bg-warning-50 px-1.5 text-[11.5px] font-semibold text-warning-700 tabular-nums ring-1 ring-warning-200 ring-inset"
-                          aria-label={`${badge} para revisar`}
-                        >
-                          {badge}
-                        </span>
+          <div key={group.label} className={cn(gi > 0 && "mt-5")}>
+            {collapsed ? (
+              gi > 0 && <div className="mx-auto mb-3 h-px w-6 bg-line" aria-hidden />
+            ) : (
+              <p className="mb-1 px-2 text-[11px] font-medium tracking-wider text-ink-4 uppercase">{group.label}</p>
+            )}
+            <ul className="flex flex-col gap-0.5" aria-label={group.label}>
+              {group.items.map((item) => (
+                <li key={item.href}>
+                  <NavLink item={item} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />
+                  {item.children && !collapsed && (
+                    <ul className="mt-0.5 ml-[17px] flex flex-col gap-0.5 border-l border-line pl-2" aria-label={`Canais da ${item.label}`}>
+                      {item.children.map((child) => (
+                        <li key={child.href}>
+                          <NavLink item={child} pathname={pathname} collapsed={false} onNavigate={onNavigate} sub />
+                        </li>
                       ))}
-                  </Link>
-                );
-                return (
-                  <li key={item.href}>
-                    {collapsed ? (
-                      <Tooltip content={item.label} side="right">
-                        {link}
-                      </Tooltip>
-                    ) : (
-                      link
-                    )}
-                  </li>
-                );
-              })}
+                    </ul>
+                  )}
+                </li>
+              ))}
             </ul>
           </div>
         ))}
       </nav>
 
-      <div className={cn("flex shrink-0 flex-col gap-2 border-t border-line py-3", collapsed ? "items-center px-2" : "px-3")}>
-        <AgentStatus collapsed={collapsed} />
+      <div className={cn("flex shrink-0 flex-col gap-0.5 border-t border-line py-2", collapsed ? "items-center px-2" : "px-3")}>
         <UserMenu collapsed={collapsed} />
+        <SignOutButton collapsed={collapsed} />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRightLeft,
+  ChevronDown,
   Bot,
   CircleAlert,
   CircleCheck,
@@ -11,18 +12,20 @@ import {
   Ellipsis,
   Flag,
   PanelRight,
+  PanelRightClose,
+  PanelRightOpen,
   Play,
   RotateCcw,
   Ticket,
   UserCheck,
   UserRound,
 } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { NotFoundContent } from "@/components/shared/not-found-content";
 import { ChannelIcon, StateBadge, StoreDot, storeById } from "@/components/shared/domain";
 import { Button } from "@/components/ui/button";
-import { Callout } from "@/components/ui/data";
+import { Avatar } from "@/components/ui/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,12 +39,14 @@ import {
 } from "@/components/ui/menu";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { OrderSheet } from "@/features/orders/order-detail";
-import { agentModeMeta, channelLabels, priorityMeta } from "@/lib/demo/labels";
+import { agentModeMeta, priorityMeta } from "@/lib/demo/labels";
 import { CURRENT_USER_ID, useDataset, useDemo } from "@/lib/demo/store";
 import type { Conversation, MessageItem, Priority } from "@/lib/demo/types";
 import { formatClock } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { Composer, type ComposerSeed } from "./composer";
 import { CustomerPanel } from "./customer-panel";
+import { useInbox } from "./inbox-shell";
 import { Timeline } from "./timeline";
 import { TransferDialog } from "./transfer-dialog";
 
@@ -81,87 +86,137 @@ function useConversationActions(conversation: Conversation) {
   };
 }
 
+/** Linha discreta com quem conduz a conversa; o motivo do encaminhamento fica recolhido. */
 function SupervisionBanner({ conversation }: { conversation: Conversation }) {
   const { state } = useDemo();
   const agent = state.agent;
   const channelSetting = agent.channels[conversation.storeId]?.[conversation.channel];
-  const store = storeById(conversation.storeId);
-  const where = `${store?.name ?? "Loja"} · ${channelLabels[conversation.channel]}`;
   const member = (id?: string) => (id === CURRENT_USER_ID ? "você" : state.members.find((m) => m.id === id)?.name ?? "alguém da equipe");
+  const agentOff = agent.orgPaused || channelSetting?.paused || channelSetting?.mode === "off";
+  const mode = agentModeMeta[channelSetting?.mode ?? "auto"].short.toLowerCase();
+
+  let icon = <Bot className="size-3.5 text-ink-3" aria-hidden />;
+  let text: ReactNode;
+  let details: ReactNode = null;
+  let tone = "text-ink-3";
 
   switch (conversation.state) {
     case "needs_review":
-      if (conversation.aiDraft) {
-        return (
-          <Callout tone="info" icon={Bot} title="Resposta da IA aguardando aprovação">
-            O agente está em modo copiloto em {where}. Revise a resposta abaixo, edite se precisar e aprove ou descarte.
-          </Callout>
-        );
-      }
-      return (
-        <Callout tone="warning" icon={Flag} title="Encaminhada para revisão humana">
-          <p>{conversation.handoff?.reason}</p>
-          {conversation.handoff && (
-            <p className="mt-1 text-xs text-ink-3">
-              Regra aplicada: {conversation.handoff.rule} · às {formatClock(conversation.handoff.at)}
-            </p>
-          )}
+      icon = <Flag className="size-3.5 text-warning-700" aria-hidden />;
+      tone = "text-warning-700";
+      text = conversation.aiDraft ? "Resposta da IA aguardando aprovação (modo copiloto)" : "A IA encaminhou esta conversa para revisão humana";
+      details = conversation.handoff && (
+        <>
+          <p>{conversation.handoff.reason}</p>
+          <p className="mt-1 text-ink-3">
+            Regra aplicada: {conversation.handoff.rule} · às {formatClock(conversation.handoff.at)}
+          </p>
           {conversation.aiSuggestion && (
-            <p className="mt-2 border-t border-warning-200 pt-2">
+            <p className="mt-2">
               <span className="font-medium text-ink">Sugestão do agente (não executada): </span>
               {conversation.aiSuggestion}
             </p>
           )}
-        </Callout>
+        </>
       );
+      break;
     case "agent_error":
-      return (
-        <Callout tone="danger" title="O agente não conseguiu responder">
+      icon = <CircleAlert className="size-3.5 text-danger-700" aria-hidden />;
+      tone = "text-danger-700";
+      text = "O agente não conseguiu responder";
+      details = (
+        <>
           <p>{conversation.error}</p>
-          {conversation.aiSuggestion && <p className="mt-1.5 text-ink-2">{conversation.aiSuggestion}</p>}
-        </Callout>
+          {conversation.aiSuggestion && <p className="mt-1.5">{conversation.aiSuggestion}</p>}
+        </>
       );
+      break;
     case "agent_paused":
-      return (
-        <Callout tone="neutral" icon={CirclePause} title={`IA pausada nesta conversa por ${member(conversation.pausedBy)}`}>
-          Ninguém assumiu ainda. Assuma para responder ao cliente ou retome a IA.
-        </Callout>
-      );
+      icon = <CirclePause className="size-3.5 text-warning-700" aria-hidden />;
+      tone = "text-warning-700";
+      text = `IA pausada por ${member(conversation.pausedBy)}. Ninguém assumiu ainda.`;
+      break;
     case "human_assigned":
-      return (
-        <Callout tone="neutral" icon={UserRound} title={`Conduzida por ${member(conversation.assigneeId ?? undefined)}`}>
-          A IA está pausada nesta conversa.
-          {conversation.handoff && ` Motivo do encaminhamento: ${conversation.handoff.reason}`}
-        </Callout>
-      );
+      icon = <UserRound className="size-3.5 text-ink-3" aria-hidden />;
+      text = `Conduzida por ${member(conversation.assigneeId ?? undefined)} · IA pausada nesta conversa`;
+      details = conversation.handoff && <p>Motivo do encaminhamento: {conversation.handoff.reason}</p>;
+      break;
     case "auto_resolved":
+      text = "Resolvida pelo agente de IA";
+      break;
     case "resolved":
-      return null;
-    default: {
-      if (agent.orgPaused || channelSetting?.paused || channelSetting?.mode === "off") {
-        return (
-          <Callout tone="warning" icon={CirclePause} title="O agente está pausado para este canal">
-            Enquanto estiver pausado em {where}, novas mensagens ficam aguardando a equipe.
-          </Callout>
-        );
+      icon = <CircleCheck className="size-3.5 text-ink-3" aria-hidden />;
+      text = "Resolvida pela equipe";
+      break;
+    default:
+      if (agentOff) {
+        icon = <CirclePause className="size-3.5 text-warning-700" aria-hidden />;
+        text = "Agente pausado neste canal. Novas mensagens aguardam a equipe.";
+      } else {
+        text =
+          conversation.state === "awaiting_customer"
+            ? `IA respondeu e aguarda o cliente · modo ${mode}`
+            : conversation.state === "awaiting_order_info"
+              ? `IA pediu dados para localizar o pedido · modo ${mode}`
+              : `IA conduzindo · modo ${mode}`;
       }
-      const stateText =
-        conversation.state === "awaiting_customer"
-          ? "A IA respondeu e aguarda o retorno do cliente. O SLA fica pausado."
-          : conversation.state === "awaiting_order_info"
-            ? "A IA pediu dados para localizar o pedido e não informa status sem confirmá-lo."
-            : "O agente está conduzindo o atendimento. Você pode acompanhar, pausar ou assumir a qualquer momento.";
-      return (
-        <div className="flex items-start gap-2 rounded-lg border border-primary-200 bg-primary-50/60 px-3.5 py-2.5 text-[13px] text-ink-2">
-          <Bot className="mt-0.5 size-4 shrink-0 text-primary-600" aria-hidden />
-          <p>
-            <span className="font-medium text-ink">Modo {agentModeMeta[channelSetting?.mode ?? "auto"].short.toLowerCase()}</span> em{" "}
-            {where}. {stateText}
-          </p>
-        </div>
-      );
-    }
   }
+
+  // Intervenção humana e erro ganham uma faixa clara; o resto fica discreto.
+  const attention = conversation.state === "needs_review" || conversation.state === "agent_paused";
+  const critical = conversation.state === "agent_error";
+  const aiAttending = !agentOff && ["ai_active", "awaiting_customer", "awaiting_order_info"].includes(conversation.state);
+
+  const line = (
+    <span className={cn("flex min-w-0 items-center gap-1.5", tone)}>
+      {icon}
+      <span className={cn(attention || critical ? "font-medium" : "truncate")}>{text}</span>
+    </span>
+  );
+
+  if (attention || critical) {
+    const bar = cn(
+      "rounded-lg border px-3 py-2 text-[13px]",
+      critical ? "border-danger-200 bg-danger-50" : "border-warning-200 bg-warning-50",
+    );
+    if (!details) return <div className={bar}>{line}</div>;
+    return (
+      <details className={cn("group", bar)}>
+        <summary className="focus-ring -m-1 flex cursor-pointer list-none items-center gap-2 rounded-md p-1 [&::-webkit-details-marker]:hidden">
+          {line}
+          <span className={cn("ml-auto shrink-0 text-xs", critical ? "text-danger-700" : "text-warning-700")}>
+            <span className="group-open:hidden">Ver motivo</span>
+            <span className="hidden group-open:inline">Ocultar</span>
+          </span>
+          <ChevronDown className={cn("size-3.5 shrink-0 transition-transform group-open:rotate-180", critical ? "text-danger-700" : "text-warning-700")} aria-hidden />
+        </summary>
+        <div className={cn("mt-2 border-t pt-2 leading-relaxed text-ink-2", critical ? "border-danger-200" : "border-warning-200")}>{details}</div>
+      </details>
+    );
+  }
+
+  if (aiAttending) {
+    return (
+      <div className="flex justify-center">
+        <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-ai-50 px-2.5 py-1 text-xs text-ai-700">
+          <Bot className="size-3.5 shrink-0" aria-hidden />
+          <span className="truncate">{text}</span>
+        </span>
+      </div>
+    );
+  }
+
+  if (!details) return <div className="flex justify-center text-xs">{line}</div>;
+  return (
+    <details className="group text-xs">
+      <summary className="focus-ring mx-auto flex w-fit max-w-full cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-1 hover:bg-subtle [&::-webkit-details-marker]:hidden">
+        {line}
+        <span className="shrink-0 text-ink-3 group-open:hidden">· ver motivo</span>
+        <ChevronDown className="size-3 shrink-0 text-ink-4 transition-transform group-open:rotate-180" aria-hidden />
+      </summary>
+      <div className="mx-auto mt-2 max-w-xl rounded-lg border border-line bg-surface px-3 py-2.5 text-[13px] leading-relaxed text-ink-2">{details}</div>
+    </details>
+  );
 }
 
 function HeaderActions({ conversation, onTransfer }: { conversation: Conversation; onTransfer: () => void }) {
@@ -192,12 +247,6 @@ function HeaderActions({ conversation, onTransfer }: { conversation: Conversatio
           </Button>
         </Tooltip>
       )}
-      {!resolved && !mine && (
-        <Button size="sm" variant="primary" onClick={a.assume}>
-          <UserCheck className="size-3.5" aria-hidden />
-          Assumir
-        </Button>
-      )}
       {mine && (
         <Button size="sm" variant="primary" onClick={a.resolve}>
           <CircleCheck className="size-3.5" aria-hidden />
@@ -223,7 +272,7 @@ function HeaderActions({ conversation, onTransfer }: { conversation: Conversatio
               Resolver ou encerrar
             </DropdownMenuItem>
           )}
-          {aiConducting && (
+          {!resolved && !mine && (
             <DropdownMenuItem onSelect={a.assume}>
               <UserCheck aria-hidden />
               Assumir conversa
@@ -258,7 +307,8 @@ function HeaderActions({ conversation, onTransfer }: { conversation: Conversatio
 }
 
 export function ConversationView({ id }: { id: string }) {
-  const { actions } = useDemo();
+  const { state, actions } = useDemo();
+  const { listHref } = useInbox();
   const dataset = useDataset();
   const conversation = dataset.conversations.find((c) => c.id === id);
   const hiddenByStore = !conversation && dataset.allConversations.find((c) => c.id === id);
@@ -334,24 +384,22 @@ export function ConversationView({ id }: { id: string }) {
       <section className="flex min-h-0 min-w-0 flex-1 flex-col" aria-label={`Conversa com ${customer?.name ?? "cliente"}`}>
         <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
           <Button asChild size="icon-sm" variant="ghost" className="lg:hidden">
-            <Link href="/inbox" aria-label="Voltar para a lista de conversas">
+            <Link href={listHref} aria-label="Voltar para a lista de conversas">
               <ArrowLeft className="size-4" />
             </Link>
           </Button>
-          <div className="min-w-0 grow basis-60">
-            <div className="flex flex-wrap items-center gap-2">
+          <Avatar name={customer?.name ?? "Cliente"} className="hidden sm:inline-flex" />
+          <div className="min-w-0 grow basis-48">
+            <div className="flex min-w-0 items-center gap-2">
               <h2 className="truncate text-[15px] font-semibold text-ink">{customer?.name}</h2>
-              <StateBadge state={conversation.state} size="md" />
+              <StateBadge state={conversation.state} />
             </div>
             <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-ink-3">
               <ChannelIcon channel={conversation.channel} />
-              {channelLabels[conversation.channel]}
-              <span aria-hidden>·</span>
               <StoreDot storeId={conversation.storeId} />
               <span className="truncate">{store?.name}</span>
               <span aria-hidden>·</span>
-              <span className="shrink-0">#{conversation.ticketNumber}</span>
-              <span className="hidden truncate md:inline">· {conversation.subject}</span>
+              <span className="shrink-0 tabular-nums">#{conversation.ticketNumber}</span>
             </p>
           </div>
           <div className="flex items-center gap-1.5">
@@ -359,6 +407,18 @@ export function ConversationView({ id }: { id: string }) {
             <Tooltip content="Dados do cliente">
               <Button size="icon-sm" variant="ghost" className="xl:hidden" onClick={() => setPanelOpen(true)} aria-label="Abrir dados do cliente">
                 <PanelRight className="size-4" />
+              </Button>
+            </Tooltip>
+            <Tooltip content={state.contactPanelOpen ? "Recolher painel do cliente" : "Mostrar painel do cliente"}>
+              <Button
+                size="icon-sm"
+                variant={state.contactPanelOpen ? "subtle" : "ghost"}
+                className="hidden xl:inline-flex"
+                onClick={() => actions.setContactPanelOpen(!state.contactPanelOpen)}
+                aria-pressed={state.contactPanelOpen}
+                aria-label="Painel do cliente e dos pedidos"
+              >
+                {state.contactPanelOpen ? <PanelRightClose className="size-4" /> : <PanelRightOpen className="size-4" />}
               </Button>
             </Tooltip>
           </div>
@@ -390,9 +450,11 @@ export function ConversationView({ id }: { id: string }) {
         </div>
       </section>
 
-      <aside className="hidden w-[320px] shrink-0 overflow-y-auto border-l border-line bg-surface scrollbar-thin xl:block" aria-label="Dados do cliente">
-        {panel}
-      </aside>
+      {state.contactPanelOpen && (
+        <aside className="hidden w-[320px] shrink-0 overflow-y-auto border-l border-line bg-surface scrollbar-thin xl:block" aria-label="Dados do cliente">
+          {panel}
+        </aside>
+      )}
 
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
         <SheetContent title="Dados do cliente" width="w-[min(100vw,380px)]">

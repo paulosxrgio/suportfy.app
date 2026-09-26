@@ -16,6 +16,7 @@ import { orderSubtotal, orderTotal } from "@/lib/demo/selectors";
 import { useDataset, useDemo } from "@/lib/demo/store";
 import type { Order } from "@/lib/demo/types";
 import { formatCurrency, formatDate, formatDateTime, maskEmail, maskPhone } from "@/lib/format";
+import { conversationHref } from "@/features/inbox/views";
 
 export function OrderStatusBadges({ order }: { order: Order }) {
   const pay = financialStatusMeta[order.financialStatus];
@@ -238,7 +239,7 @@ export function OrderDetail({ order }: { order: Order }) {
             {related.map((c) => (
               <li key={c.id}>
                 <Link
-                  href={`/inbox/${c.id}`}
+                  href={conversationHref(c)}
                   className="focus-ring flex items-center gap-2 rounded-md px-2 py-1.5 -mx-2 text-[13px] hover:bg-subtle"
                 >
                   <ChannelIcon channel={c.channel} className="text-ink-3" />

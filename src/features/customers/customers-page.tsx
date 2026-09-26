@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { SearchX, Users } from "lucide-react";
+import { Package, SearchX, Users } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { DataGate, DemoBadge } from "@/components/shared/demo";
@@ -51,6 +51,14 @@ export function CustomersPage() {
         title="Clientes"
         description="Contatos das lojas com pedidos e conversas. Com a Shopify conectada, os dados virão das lojas."
         meta={<DemoBadge />}
+        actions={
+          <Button asChild size="sm">
+            <Link href="/pedidos">
+              <Package className="size-3.5" aria-hidden />
+              Ver todos os pedidos
+            </Link>
+          </Button>
+        }
       />
       <div className="mb-3 flex flex-col gap-2 lg:flex-row lg:items-center">
         <SearchField

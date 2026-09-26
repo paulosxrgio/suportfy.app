@@ -1,9 +1,7 @@
 import {
-  Bell,
   BookOpen,
   Bot,
   Building2,
-  Clock3,
   Code2,
   FileText,
   History,
@@ -14,7 +12,6 @@ import {
   ShoppingBag,
   Store,
   Tags,
-  Timer,
   UserCog,
   Wallet,
   Webhook,
@@ -41,8 +38,6 @@ export const settingsGroups: SettingsGroup[] = [
     items: [
       { slug: "organizacao", label: "Organização", description: "Nome, dados fiscais, fuso horário e idioma.", icon: Building2 },
       { slug: "lojas", label: "Lojas", description: "Lojas Shopify atendidas pela organização.", icon: Store },
-      { slug: "horarios", label: "Horários", description: "Horário da equipe, feriados e fuso por loja.", icon: Clock3 },
-      { slug: "notificacoes", label: "Notificações", description: "Quando e como avisar a equipe.", icon: Bell },
     ],
   },
   {
@@ -62,7 +57,6 @@ export const settingsGroups: SettingsGroup[] = [
       { slug: "agente-ia", label: "Agente de IA", description: "Políticas globais de dados e privacidade do agente.", icon: Bot },
       { slug: "conhecimento", label: "Conhecimento", description: "Regras de publicação e revisão de conteúdo.", icon: BookOpen },
       { slug: "automacoes", label: "Automações", description: "Limites e permissões das regras.", icon: Workflow },
-      { slug: "sla", label: "SLA", description: "Metas de resposta e resolução por prioridade.", icon: Timer },
       { slug: "tags", label: "Tags", description: "Etiquetas usadas pela IA e pela equipe.", icon: Tags },
       { slug: "respostas-rapidas", label: "Respostas rápidas", description: "Textos prontos para intervenções da equipe.", icon: Zap },
       { slug: "templates", label: "Templates", description: "Mensagens padrão para WhatsApp e e-mail.", icon: FileText },

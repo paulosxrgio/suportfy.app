@@ -2,6 +2,7 @@
 
 import { ChevronDown, FlaskConical, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { useBackend } from "@/components/backend-context";
 import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/controls";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/menu";
@@ -13,21 +14,37 @@ import { useDemo, type DataMode, type Simulation } from "@/lib/demo/store";
  */
 export function DemoStrip() {
   const { state, actions } = useDemo();
+  const live = useBackend().mode === "live";
   return (
     <div className="flex h-9 shrink-0 items-center gap-3 border-b border-line bg-surface px-4 text-[12.5px] text-ink-3">
       <FlaskConical className="size-3.5 shrink-0 text-ink-3" aria-hidden />
       <p className="min-w-0 flex-1 truncate">
-        <span className="font-medium text-ink-2">
-          <span className="sm:hidden">Demonstração</span>
-          <span className="hidden sm:inline">Ambiente de demonstração</span>
-        </span>
-        <span className="hidden sm:inline">
-          {" "}
-          · Dados fictícios. Nenhuma integração, envio de mensagem ou IA real está ativa.
-        </span>
+        {live ? (
+          <>
+            <span className="font-medium text-ink-2">
+              <span className="sm:hidden">Parcialmente real</span>
+              <span className="hidden sm:inline">Conectado ao servidor</span>
+            </span>
+            <span className="hidden sm:inline">
+              {" "}
+              · Conta, chave da OpenAI, canal WhatsApp e agente são reais. Inbox, clientes e relatórios ainda mostram demonstração.
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="font-medium text-ink-2">
+              <span className="sm:hidden">Demonstração</span>
+              <span className="hidden sm:inline">Ambiente de demonstração</span>
+            </span>
+            <span className="hidden sm:inline">
+              {" "}
+              · Dados fictícios. Nenhuma integração, envio de mensagem ou IA real está ativa.
+            </span>
+          </>
+        )}
       </p>
       {(state.dataMode === "empty" || state.simulation !== "none") && (
-        <span className="hidden rounded-[5px] bg-warning-50 px-1.5 py-0.5 text-[11.5px] font-medium text-warning-700 md:inline">
+        <span className="hidden rounded-md bg-warning-50 px-1.5 py-0.5 text-[11.5px] font-medium text-warning-700 md:inline">
           {state.dataMode === "empty" ? "Visualizando conta sem dados" : "Simulação de estado ativa"}
         </span>
       )}
