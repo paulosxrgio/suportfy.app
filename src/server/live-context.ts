@@ -1,6 +1,8 @@
 import "server-only";
 import type { LiveContext } from "@/components/backend-context";
 import type { SessionUser } from "./auth/sessions";
+import { getAgentSettings } from "./ai/settings";
+import { getChannelActivity, getWhatsAppChannelView } from "./channels/whatsapp-connection";
 import { getPool } from "./db/pool";
 import { withTenant } from "./db/tx";
 import { listSecretMetadata } from "./secrets/service";
@@ -15,7 +17,7 @@ export async function loadLiveContext(session: SessionUser): Promise<LiveContext
     const memberships = await listMemberships(tx);
     const current = memberships[0];
     if (!current) {
-      return { mode: "live", user: { name: session.name, email: session.email }, org: null, stores: [], channels: [], openAiKey: null };
+      return { mode: "live", user: { name: session.name, email: session.email }, org: null, stores: [], channels: [], openAiKey: null, whatsapp: null, agent: null };
     }
     const stores = await listStores(tx, current.orgId);
     const channels = await tx.query<{ store_id: string; kind: "whatsapp" | "email"; status: string }>(
@@ -23,6 +25,15 @@ export async function loadLiveContext(session: SessionUser): Promise<LiveContext
       [current.orgId],
     );
     const secret = (await listSecretMetadata(tx, current.orgId)).find((s) => s.kind === "openai_api_key" && s.storeId === null);
+    const firstStore = stores[0];
+    let whatsapp: LiveContext["whatsapp"] = null;
+    let agent: LiveContext["agent"] = null;
+    if (firstStore) {
+      const settings = await getAgentSettings(tx, firstStore.id);
+      agent = settings ? { storeId: firstStore.id, enabled: settings.enabled } : null;
+      const view = await getWhatsAppChannelView(tx, firstStore.id);
+      whatsapp = { storeId: firstStore.id, view, activity: await getChannelActivity(tx, view.channelId) };
+    }
     return {
       mode: "live",
       user: { name: session.name, email: session.email },
@@ -30,6 +41,8 @@ export async function loadLiveContext(session: SessionUser): Promise<LiveContext
       stores: stores.map((s) => ({ id: s.id, name: s.name })),
       channels: channels.rows.map((c) => ({ storeId: c.store_id, kind: c.kind, status: c.status as LiveContext["channels"][number]["status"] })),
       openAiKey: secret ? { last4: secret.last4, updatedAt: secret.updatedAt.toISOString() } : null,
+      whatsapp,
+      agent,
     };
   });
 }

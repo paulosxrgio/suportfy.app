@@ -20,6 +20,19 @@ const schema = z.object({
   SUPORTFY_ENCRYPTION_KEY: base64Key.optional(),
   /** Versão da chave acima; permite rotação sem perder segredos antigos. */
   SUPORTFY_ENCRYPTION_KEY_VERSION: z.coerce.number().int().min(1).default(1),
+  /**
+   * Endereço público do app (ex.: https://app.suportfy.com.br), usado para
+   * registrar o webhook nos provedores. Sem ele, não é possível conectar canais.
+   */
+  SUPORTFY_PUBLIC_URL: z.string().url().optional(),
+  /**
+   * Só desenvolvimento: permite provedores em http:// e redes internas (ex.: uma
+   * Evolution API local). Ignorado quando NODE_ENV=production.
+   */
+  SUPORTFY_DEV_ALLOW_PRIVATE_PROVIDER_URLS: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
 });
 
 export type ServerEnv = z.infer<typeof schema>;

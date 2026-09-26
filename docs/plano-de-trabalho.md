@@ -1,6 +1,6 @@
 # Plano de trabalho — Suportfy V4
 
-Atualizado em 26/09/2026, após a primeira fatia do backend. Detalhes técnicos em
+Atualizado em 26/09/2026, após a segunda fatia do backend (WhatsApp de ponta a ponta). Detalhes técnicos em
 [`arquitetura-backend.md`](./arquitetura-backend.md). As versões anteriores
 (`suport-fy`, `suportfybr`, `suportfy-v2`, `suportfy-whatsapp`) seguem como referência
 de aprendizado; nenhum código foi copiado.
@@ -20,9 +20,22 @@ de aprendizado; nenhum código foi copiado.
     com pedidos da loja, resposta estruturada validada, outbox com novas tentativas.
   - Adaptadores Evolution API (WhatsApp) e Resend (e-mail), sem marcar nada como
     conectado.
-- **Ainda demonstração:** as telas de atendimento (Inbox, Visão geral, Clientes,
-  Relatórios etc.) e as preferências do agente. Nenhum canal conectado; nada chama o
-  pipeline em produção ainda.
+- **Backend — canal WhatsApp (segunda fatia):**
+  - Conectar, testar e desconectar uma instância da Evolution API pela interface, com
+    estado real (conectado, aguardando QR code, erro com motivo).
+  - Webhook `/api/webhooks/whatsapp/{canal}` autenticado pelo JWT HS256 que a própria
+    Evolution API assina com a chave do canal; payload validado; eventos duplicados
+    não duplicam mensagem nem resposta.
+  - Mensagem recebida → persistência → agente com contexto só da loja (com pedidos) →
+    outbox → envio pela Evolution API, com novas tentativas e lock por conversa.
+  - Proteção contra SSRF nas chamadas ao provedor (inclui DNS rebinding).
+  - Liga/desliga do atendimento automático por loja, gravado no servidor.
+  - Atividade do canal (recebidas, enviadas, falhas, bloqueadas) e a última mensagem
+    que o agente não respondeu, com o motivo.
+- **Ainda demonstração:** Inbox, Visão geral, Clientes, Relatórios e as preferências do
+  agente além do liga/desliga. E-mail e Shopify desconectados.
+- **Depende de credenciais reais:** validar o fluxo com uma instância real da Evolution API
+  e uma chave real da OpenAI (o ambiente de desenvolvimento bloqueia os dois domínios).
 
 ## Decisões tomadas
 
@@ -30,11 +43,12 @@ de aprendizado; nenhum código foi copiado.
 | --- | --- | --- |
 | 1 | WhatsApp via **Evolution API**, provedor já definido na interface do V4 | Adotado para esta fase. O adaptador isola o provedor; migrar para a Meta Cloud API continua possível e deve ser reavaliado pelo risco de bloqueio de número em API não oficial. |
 | 2 | Banco próprio do V4 (PostgreSQL + RLS), com conceitos de isolamento da V2 reescritos | Implementado. Independe de Supabase (usa `app.user_id`, não `auth.uid()`). |
-| 3 | Processamento dentro do app Next.js: fila no Postgres (outbox) + job agendado | Outbox implementada; webhooks e job agendado ficam para a próxima fatia. |
+| 3 | Processamento dentro do app Next.js: fila no Postgres (outbox) + job agendado | Outbox e webhook implementados; o processamento roda logo após cada webhook (`after()`). Job periódico fica para depois. |
 | 4 | Chave da OpenAI por organização, com substituição opcional por loja | Implementado (a interface ainda gerencia só a da organização). |
 | 5 | Contrato do agente: saída JSON estrita; pedidos, rastreios e links citados precisam existir no contexto | Implementado (v1). |
 | 6 | **Sem atendimento humano como fluxo de produto.** A IA atende; quando não pode responder com segurança, não envia e registra o motivo (`ai_status = 'error'`). | Decidido. O backend não tem atribuição, transferência nem fila de operadores. |
 | 7 | Modo demonstração mantido quando não há `DATABASE_URL` | Implementado, para prévias sem banco. |
+| 8 | Autenticidade do webhook da Evolution API pelo JWT HS256 nativo (`headers.jwt_key`), uma chave por canal | Implementado. É o mecanismo que o provedor oferece; não há HMAC do corpo. |
 
 ### Divergência registrada entre interface e backend
 
@@ -59,9 +73,13 @@ retomar a IA na conversa, ver o motivo do erro) quando a Inbox passar a usar dad
 
 - **Sem limite de tentativas de login.** Adicionar rate limit por IP e por e-mail antes
   de abrir cadastro público.
-- **SSRF na configuração da Evolution API.** O endereço da instância é configurável por
-  administradores; validar HTTPS e bloquear redes internas antes de permitir o cadastro
-  do canal pela interface.
+- **Sem job periódico.** Uma resposta que falhou temporariamente só é reenviada quando
+  chega outra mensagem da mesma conversa. Um job curto (ex.: Vercel Cron a cada minuto
+  chamando `dispatchOutbox`) resolve.
+- **JWT do webhook sem proteção de replay dentro dos 10 minutos.** A reentrega do mesmo
+  evento é inofensiva (idempotência), mas o token não é de uso único.
+- **Formato não confirmado em instância real.** Endereços, eventos e o JWT foram
+  conferidos no código-fonte da Evolution API v2, não numa instância em execução.
 - **Orçamento aproximado.** Duas execuções simultâneas podem ultrapassar o teto em uma
   chamada; aceitável para centavos, mas registrado.
 - **Evolution sem idempotência no envio.** Se o processo cair depois de enviar e antes de
@@ -71,23 +89,21 @@ retomar a IA na conversa, ver o motivo do erro) quando a Inbox passar a usar dad
 
 ## Próximas fatias
 
-1. **Webhooks e jobs.** Route Handlers para o webhook da Evolution (segredo por canal
-   no endereço ou cabeçalho, comparação em tempo constante), job agendado que roda
-   `runAgent` e `dispatchOutbox`, e fluxo de conexão do canal (validar credenciais →
-   `connected`).
-2. **Inbox real.** Listas de WhatsApp e E-mail, conversa e painel do cliente lendo do
+1. **Validar com credenciais reais.** Instância de teste da Evolution API e chave da
+   OpenAI em um ambiente com banco hospedado (decisão D) e `SUPORTFY_PUBLIC_URL`.
+2. **Job periódico.** Rota protegida chamada por agendamento (reenvio com backoff,
+   mensagens que ficaram sem processar).
+3. **Inbox real.** Listas de WhatsApp e E-mail, conversa e painel do cliente lendo do
    banco (os repositórios já existem e têm testes de isolamento). Retirar as ações de
    atendimento humano; mostrar estado do agente, motivos de erro e eventos.
-3. **Shopify somente leitura.** Sincronizar clientes e pedidos por loja
+4. **Shopify somente leitura.** Sincronizar clientes e pedidos por loja
    (`source = 'shopify'`), com versão de API fixa e webhooks assinados.
-4. **Preferências do agente no servidor.** Modelo, teto diário e limites gravados em
-   `ai_settings`, com validação da lista de modelos permitidos.
-5. **Organizações:** convites, troca de organização/loja, papéis.
-6. **Operação:** rate limit de login, monitoramento da fila, alertas de falha, LGPD e
-   testes ponta a ponta.
+5. **E-mail (Resend)**, com recebimento, separado do WhatsApp.
+6. **Preferências do agente no servidor** (modelo, teto diário, limites), organizações
+   (convites, troca de loja) e operação (rate limit de login, alertas, LGPD).
 
 ## Próximo passo recomendado
 
-Resolver a decisão D (hospedagem do Postgres) para ligar o backend na prévia da Vercel
-e, em seguida, fazer a fatia 1 (webhooks e jobs) com uma instância de teste da
-Evolution API.
+Resolver a decisão D (hospedagem do Postgres), publicar com `SUPORTFY_PUBLIC_URL` e
+conectar uma instância de teste da Evolution API com um número de teste — é o que falta
+para ver uma resposta real chegando no WhatsApp.

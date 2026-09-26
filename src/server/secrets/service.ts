@@ -5,7 +5,7 @@ import { AppError } from "../errors";
 import { requireRole } from "../tenancy/context";
 import { open, seal } from "./crypto";
 
-export type SecretKind = "openai_api_key" | "evolution_api_key" | "resend_api_key";
+export type SecretKind = "openai_api_key" | "evolution_api_key" | "resend_api_key" | "evolution_webhook_key";
 
 export interface SecretKeyring {
   /** Chave atual (versão `version`) e, opcionalmente, anteriores para decifrar. */
@@ -26,6 +26,8 @@ const valueSchemas: Record<SecretKind, z.ZodString> = {
   openai_api_key: z.string().trim().regex(/^sk-[A-Za-z0-9_-]{20,200}$/, "A chave da OpenAI começa com \"sk-\" e tem pelo menos 23 caracteres."),
   evolution_api_key: z.string().trim().min(16, "Chave da Evolution API muito curta.").max(300),
   resend_api_key: z.string().trim().regex(/^re_[A-Za-z0-9_]{10,200}$/, "A chave da Resend começa com \"re_\"."),
+  // Gerada pelo próprio servidor (32 bytes aleatórios em base64url).
+  evolution_webhook_key: z.string().regex(/^[A-Za-z0-9_-]{43}$/, "Chave de webhook inválida."),
 };
 
 function aad(orgId: string, storeId: string | null, kind: SecretKind): string {

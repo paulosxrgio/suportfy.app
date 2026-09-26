@@ -26,6 +26,8 @@ import { allowedModels, type AllowedModelId } from "@/lib/ai-models";
 import { stores, useDemo } from "@/lib/demo/store";
 import { useBackend } from "@/components/backend-context";
 import { OpenAiKeyLive } from "../openai-key-live";
+import { WhatsAppLive } from "../whatsapp-live";
+import { AgentToggleLive } from "../agent-toggle-live";
 import { SaveFooter, SecretField, SectionHeader, SettingRow, StatePreview, useSessionSettings, ValidatingRow } from "../common";
 
 /**
@@ -42,7 +44,7 @@ function ChannelStatusBadge({ kind }: { kind: "whatsapp" | "email" }) {
     : statuses.includes("connected")
       ? "conectado"
       : statuses.includes("pending")
-        ? "validando"
+        ? "configuracao_necessaria"
         : "nao_configurado";
   return <IntegrationBadge state={state} />;
 }
@@ -99,6 +101,8 @@ export function AiSection() {
         slug="inteligencia-artificial"
         meta={<IntegrationBadge state={liveKeyState ?? "nao_configurado"} labels={liveKeyState ? liveKeyLabels : openAiLabels} />}
       />
+
+      {liveKeyState && <AgentToggleLive />}
 
       <Panel
         title="OpenAI"
@@ -211,7 +215,7 @@ export function AiSection() {
         {liveKeyState ? (
           <Callout tone="info" className="mt-4">
             Com o servidor configurado, a chave é cifrada com AES-256-GCM, amarrada à sua organização e usada só pelo backend. O agente
-            ainda não atende clientes: os canais estão desconectados e a IA começa desligada.
+            só responde quando o atendimento automático está ligado e o WhatsApp está conectado.
           </Callout>
         ) : (
           <Callout tone="warning" className="mt-4">
@@ -352,6 +356,19 @@ export function ShopifySection() {
 /* --------------------------------- WhatsApp --------------------------------- */
 
 export function WhatsAppSection() {
+  const backend = useBackend();
+  if (backend.mode === "live") {
+    return (
+      <div className="space-y-4">
+        <SectionHeader slug="whatsapp" meta={<ChannelStatusBadge kind="whatsapp" />} />
+        <WhatsAppLive />
+      </div>
+    );
+  }
+  return <WhatsAppDemoSection />;
+}
+
+function WhatsAppDemoSection() {
   const [preview, setPreview] = useState<IntegrationState>("nao_configurado");
   const form = useSessionSettings("whatsapp", "WhatsApp", { serverUrl: "", instancePrefix: "suportfy" });
   return (

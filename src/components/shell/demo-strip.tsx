@@ -27,7 +27,7 @@ export function DemoStrip() {
             </span>
             <span className="hidden sm:inline">
               {" "}
-              · Conta, sessão e chave da OpenAI são reais. Conversas, clientes e relatórios ainda são demonstração.
+              · Conta, chave da OpenAI, canal WhatsApp e agente são reais. Inbox, clientes e relatórios ainda mostram demonstração.
             </span>
           </>
         ) : (

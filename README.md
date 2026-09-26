@@ -2,7 +2,7 @@
 
 Plataforma de **atendimento automatizado por IA para lojas Shopify**. O agente de IA atende clientes por WhatsApp e e-mail, consulta pedidos e a base de conhecimento, resolve o que é permitido e encaminha exceções para uma fila de revisão humana. A equipe supervisiona e intervém só quando necessário.
 
-> **Estado atual: fundação do backend.** Há banco PostgreSQL com isolamento por organização (RLS), login, chave da OpenAI cifrada no servidor e o pipeline do agente testado. As telas de atendimento ainda usam dados de demonstração, e nenhum canal está conectado. Sem `DATABASE_URL`, o app roda inteiro em modo demonstração, como antes. Veja [`docs/arquitetura-backend.md`](docs/arquitetura-backend.md) e [`docs/plano-de-trabalho.md`](docs/plano-de-trabalho.md).
+> **Estado atual: backend com o canal WhatsApp de ponta a ponta.** Há banco PostgreSQL com isolamento por organização (RLS), login, chave da OpenAI cifrada, conexão de uma instância da Evolution API pela interface e o webhook autenticado que leva a mensagem do cliente até o agente e a resposta de volta pelo WhatsApp. A integração foi testada com provedores falsos que seguem os formatos oficiais; falta validar com uma instância real. Inbox, clientes e relatórios ainda usam dados de demonstração. Sem `DATABASE_URL`, o app roda inteiro em modo demonstração. Veja [`docs/arquitetura-backend.md`](docs/arquitetura-backend.md) e [`docs/plano-de-trabalho.md`](docs/plano-de-trabalho.md).
 
 ## Como executar
 
@@ -20,6 +20,7 @@ Abra <http://localhost:3000>. A raiz redireciona para `/visao-geral`.
 1. Copie `.env.example` para `.env.local` e preencha `DATABASE_URL` e `SUPORTFY_ENCRYPTION_KEY` (nunca versione esse arquivo).
 2. Aplique as migrations: `npm run db:migrate`.
 3. Rode `npm run dev` e crie uma conta em `/criar-conta`.
+4. Para o WhatsApp: defina `SUPORTFY_PUBLIC_URL` (endereço público onde a Evolution API alcança o app), salve a chave da OpenAI e ligue o atendimento automático em Configurações › Inteligência Artificial, e conecte a instância em Configurações › WhatsApp.
 
 Testes de integração (isolamento entre organizações, autenticação, segredos e pipeline do agente) precisam de um Postgres descartável:
 
@@ -68,7 +69,7 @@ Sem `TEST_DATABASE_URL`, esses testes aparecem como *skipped*.
 
 ## O que é demonstrativo
 
-Com backend configurado, são reais: conta, login e sessão, organização e loja no menu, chave da OpenAI e estado dos canais (desconectados). Todo o resto abaixo continua demonstrativo nos dois modos.
+Com backend configurado, são reais: conta, login e sessão, organização e loja no menu, chave da OpenAI, liga/desliga do agente, conexão do WhatsApp e a atividade do canal. Todo o resto abaixo continua demonstrativo nos dois modos.
 
 - **Dados.** Tudo vem de `src/lib/demo/data.ts`: lojas, clientes, pedidos, conversas, conhecimento, automações e equipe. Nomes e contatos são fictícios, e os e-mails usam os domínios reservados `example.com` e `.example`. Conversas, tickets, clientes e pedidos são o mesmo conjunto visto de ângulos diferentes, e os testes em `src/lib/demo/data.test.ts` garantem essa coerência.
 - **Ações.** Assumir, pausar a IA, devolver à IA, transferir, resolver, aprovar rascunho, publicar conteúdo, convidar pessoas e salvar configurações alteram apenas o estado em memória (`src/lib/demo/store.tsx`). Nada é persistido, e tudo volta ao original ao recarregar. Cada ação aparece em Configurações › Auditoria.

@@ -30,6 +30,7 @@ Plataforma de atendimento automatizado por IA para lojas Shopify. Nesta fase o r
 - Segredos: `setSecret`/`readSecretForServerUse`. Nunca devolva o valor à interface nem o registre em logs (nem em mensagens de erro).
 - O atendimento é feito pela IA. Não crie atribuição a pessoas, transferência nem fila de operadores.
 - Não marque canal como conectado sem validar credenciais com o provedor.
+- Chamadas a endereços configurados por clientes (ex.: Evolution API) passam por `createSafeRequester` (bloqueio de SSRF). Nunca registre o corpo de webhooks em logs.
 - Testes de integração usam `TEST_DATABASE_URL` e criam um banco descartável por arquivo.
 
 ## Onde fica cada coisa

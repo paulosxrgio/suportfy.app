@@ -1,7 +1,8 @@
 import "server-only";
 import type { Tx } from "../db/tx";
+import type { HttpRequester } from "../net/safe-request";
 import { readSecretForServerUse, type SecretKeyring } from "../secrets/service";
-import { createEvolutionAdapter } from "./evolution";
+import { createEvolutionAdapter, createEvolutionClient } from "./evolution";
 import { createResendAdapter } from "./resend";
 import type { ChannelAdapter } from "./types";
 
@@ -14,7 +15,7 @@ export type ChannelAvailability =
  * envia quando o status é "connected" (definido pelo servidor após validar
  * credenciais) e a chave cifrada existe.
  */
-export async function resolveChannel(tx: Tx, keyring: SecretKeyring, channelId: string): Promise<ChannelAvailability> {
+export async function resolveChannel(tx: Tx, keyring: SecretKeyring, channelId: string, request: HttpRequester): Promise<ChannelAvailability> {
   const { rows } = await tx.query<{ org_id: string; store_id: string; kind: string; status: string; address: string | null; config: Record<string, unknown> }>(
     "SELECT org_id, store_id, kind, status, address, config FROM channels WHERE id = $1",
     [channelId],
@@ -28,7 +29,7 @@ export async function resolveChannel(tx: Tx, keyring: SecretKeyring, channelId: 
     const baseUrl = typeof ch.config.baseUrl === "string" ? ch.config.baseUrl : null;
     const instance = typeof ch.config.instance === "string" ? ch.config.instance : null;
     if (!baseUrl || !instance) return { state: "disconnected", reason: "incomplete_config" };
-    return { state: "connected", adapter: createEvolutionAdapter({ baseUrl, instance, apiKey }) };
+    return { state: "connected", adapter: createEvolutionAdapter(createEvolutionClient({ baseUrl, instance, apiKey }, request)) };
   }
   const apiKey = await readSecretForServerUse(tx, keyring, { ...scope, kind: "resend_api_key" });
   if (!apiKey) return { state: "disconnected", reason: "missing_credentials" };

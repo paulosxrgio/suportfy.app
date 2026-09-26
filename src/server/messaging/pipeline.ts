@@ -280,6 +280,8 @@ export interface DispatchDeps {
   now?: () => Date;
   maxAttempts?: number;
   batchSize?: number;
+  /** Limita o envio a uma conversa (usado logo após responder um webhook). */
+  conversationId?: string;
 }
 
 export interface DispatchSummary {
@@ -309,10 +311,11 @@ export async function dispatchOutbox(db: Db, deps: DispatchDeps): Promise<Dispat
        WHERE id IN (
          SELECT id FROM messages
          WHERE direction = 'outbound' AND status IN ('queued', 'sending') AND next_attempt_at <= $1
+           AND ($4::uuid IS NULL OR conversation_id = $4)
          ORDER BY next_attempt_at LIMIT $2 FOR UPDATE SKIP LOCKED
        )
        RETURNING id, org_id, store_id, conversation_id, body, idempotency_key, attempts`,
-      [now, deps.batchSize ?? 20, LEASE_SECONDS],
+      [now, deps.batchSize ?? 20, LEASE_SECONDS, deps.conversationId ?? null],
     ),
   );
 
