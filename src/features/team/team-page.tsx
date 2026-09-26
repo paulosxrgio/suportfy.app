@@ -165,6 +165,7 @@ export function TeamPage() {
     <PageContainer>
       <PageHeader
         title="Equipe"
+        breadcrumbs={[{ label: "Configurações", href: "/configuracoes" }, { label: "Equipe" }]}
         description="Pessoas que supervisionam o agente e assumem as exceções, com função e lojas acessíveis."
         meta={<DemoBadge />}
         actions={

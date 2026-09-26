@@ -68,6 +68,7 @@ export function OrdersPage() {
     <PageContainer>
       <PageHeader
         title="Pedidos"
+        breadcrumbs={[{ label: "Clientes", href: "/clientes" }, { label: "Pedidos" }]}
         description="Pedidos das lojas, usados pelo agente para informar status, pagamento e rastreio."
         meta={<DemoBadge />}
         actions={

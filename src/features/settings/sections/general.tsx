@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarPlus, History, SearchX, ShoppingBag, Store as StoreIcon, Trash2, Wallet } from "lucide-react";
+import { History, SearchX, ShoppingBag, Store as StoreIcon, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 import { IntegrationBadge, StoreDot } from "@/components/shared/domain";
 import { FilterMenu, SearchField } from "@/components/shared/filters";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox, Switch } from "@/components/ui/controls";
+import { Switch } from "@/components/ui/controls";
 import { Avatar, Callout, EmptyState, Panel, Table, TableContainer, Td, Th, Tr } from "@/components/ui/data";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -146,167 +146,7 @@ export function StoresSection() {
   );
 }
 
-/* --------------------------------- Horários --------------------------------- */
-
-const weekdays = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
-
-export function HoursSection() {
-  const form = useSessionSettings("horarios", "Horários", {
-    days: weekdays.map((d, i) => ({ day: d, open: i < 5 || i === 5, start: "09:00", end: i === 5 ? "13:00" : "18:00" })),
-    holidays: [
-      { date: "2026-10-12", name: "Nossa Senhora Aparecida" },
-      { date: "2026-11-02", name: "Finados" },
-      { date: "2026-11-15", name: "Proclamação da República" },
-      { date: "2026-12-25", name: "Natal" },
-    ],
-  });
-  const [holidayDate, setHolidayDate] = useState("");
-  const [holidayName, setHolidayName] = useState("");
-  const invalidDays = form.value.days.filter((d) => d.open && d.start >= d.end);
-
-  return (
-    <div className="space-y-4">
-      <SectionHeader slug="horarios" />
-      <Panel title="Horário da equipe" description="Fora desse horário, o agente pode atender sozinho conforme a configuração do agente.">
-        <ul className="divide-y divide-line">
-          {form.value.days.map((d, i) => (
-            <li key={d.day} className="flex flex-wrap items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-              <label className="flex w-36 items-center gap-2 text-[13px] text-ink">
-                <Switch
-                  checked={d.open}
-                  onCheckedChange={(v) => form.set("days", form.value.days.map((x, idx) => (idx === i ? { ...x, open: v } : x)))}
-                  aria-label={`${d.day}: equipe disponível`}
-                />
-                {d.day}
-              </label>
-              {d.open ? (
-                <span className="flex items-center gap-2 text-[13px] text-ink-3">
-                  <Input
-                    type="time"
-                    className="h-8 w-28"
-                    value={d.start}
-                    aria-label={`${d.day}: início`}
-                    onChange={(e) => form.set("days", form.value.days.map((x, idx) => (idx === i ? { ...x, start: e.target.value } : x)))}
-                  />
-                  até
-                  <Input
-                    type="time"
-                    className="h-8 w-28"
-                    value={d.end}
-                    aria-label={`${d.day}: fim`}
-                    aria-invalid={d.start >= d.end || undefined}
-                    onChange={(e) => form.set("days", form.value.days.map((x, idx) => (idx === i ? { ...x, end: e.target.value } : x)))}
-                  />
-                </span>
-              ) : (
-                <span className="text-[13px] text-ink-3">Sem equipe · somente o agente</span>
-              )}
-            </li>
-          ))}
-        </ul>
-        {invalidDays.length > 0 && <p className="mt-2 text-xs text-danger-700">O horário final precisa ser depois do inicial.</p>}
-      </Panel>
-      <Panel title="Feriados" description="Dias sem equipe. O SLA não conta nesses dias.">
-        <ul className="divide-y divide-line">
-          {form.value.holidays.map((h) => (
-            <li key={h.date} className="flex items-center justify-between py-2 text-[13px] first:pt-0">
-              <span>
-                <span className="text-ink">{h.name}</span>
-                <span className="ml-2 text-ink-3 tabular-nums">{h.date.split("-").reverse().join("/")}</span>
-              </span>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                aria-label={`Remover feriado ${h.name}`}
-                onClick={() => form.set("holidays", form.value.holidays.filter((x) => x.date !== h.date))}
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            </li>
-          ))}
-        </ul>
-        <form
-          className="mt-3 flex flex-wrap items-end gap-2 border-t border-line pt-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!holidayDate || !holidayName.trim()) return;
-            form.set("holidays", [...form.value.holidays, { date: holidayDate, name: holidayName.trim() }].sort((a, b) => a.date.localeCompare(b.date)));
-            setHolidayDate("");
-            setHolidayName("");
-          }}
-        >
-          <Field label="Data" className="w-40">
-            {(props) => <Input {...props} type="date" value={holidayDate} onChange={(e) => setHolidayDate(e.target.value)} />}
-          </Field>
-          <Field label="Nome" className="min-w-48 flex-1">
-            {(props) => <Input {...props} value={holidayName} onChange={(e) => setHolidayName(e.target.value)} placeholder="Ex.: Aniversário da cidade" />}
-          </Field>
-          <Button type="submit" size="md" disabled={!holidayDate || !holidayName.trim()}>
-            <CalendarPlus className="size-4" aria-hidden />
-            Adicionar
-          </Button>
-        </form>
-        <SaveFooter dirty={form.dirty && invalidDays.length === 0} onSave={form.save} onReset={form.reset} />
-      </Panel>
-    </div>
-  );
-}
-
-/* ------------------------------- Notificações ------------------------------- */
-
-const notificationEvents = [
-  { id: "revisao", label: "IA encaminhou uma conversa para revisão" },
-  { id: "erro", label: "Erro no agente de IA" },
-  { id: "sla", label: "SLA em risco ou vencido" },
-  { id: "atribuida", label: "Conversa atribuída a mim" },
-  { id: "resumo", label: "Resumo diário do atendimento" },
-  { id: "orcamento", label: "Consumo de IA perto do orçamento" },
-];
-
-export function NotificationsSection() {
-  const form = useSessionSettings("notificacoes", "Notificações", {
-    matrix: Object.fromEntries(notificationEvents.map((e) => [e.id, { app: true, email: ["erro", "resumo", "orcamento"].includes(e.id) }])) as Record<string, { app: boolean; email: boolean }>,
-  });
-  return (
-    <div>
-      <SectionHeader slug="notificacoes" />
-      <Callout tone="neutral" className="mb-4">
-        Preferências da sua conta. Nesta versão, nenhuma notificação é enviada.
-      </Callout>
-      <TableContainer>
-        <Table className="min-w-[520px]">
-          <thead>
-            <tr>
-              <Th>Evento</Th>
-              <Th className="w-28 text-center">No painel</Th>
-              <Th className="w-28 text-center">Por e-mail</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {notificationEvents.map((e) => (
-              <Tr key={e.id}>
-                <Td className="text-ink">{e.label}</Td>
-                {(["app", "email"] as const).map((ch) => (
-                  <Td key={ch} className="text-center">
-                    <Checkbox
-                      className="mx-auto"
-                      checked={form.value.matrix[e.id][ch]}
-                      aria-label={`${e.label}: ${ch === "app" ? "no painel" : "por e-mail"}`}
-                      onCheckedChange={(on) => form.set("matrix", { ...form.value.matrix, [e.id]: { ...form.value.matrix[e.id], [ch]: on === true } })}
-                    />
-                  </Td>
-                ))}
-              </Tr>
-            ))}
-          </tbody>
-        </Table>
-      </TableContainer>
-      <SaveFooter dirty={form.dirty} onSave={form.save} onReset={form.reset} />
-    </div>
-  );
-}
-
-/* --------------------------------- Segurança -------------------------------- */
+/* -------------------------------- Segurança --------------------------------- */
 
 export function SecuritySection() {
   const form = useSessionSettings("seguranca", "Segurança", {

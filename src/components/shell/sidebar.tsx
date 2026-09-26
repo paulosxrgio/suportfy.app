@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bell,
   Building2,
   Check,
   ChevronsUpDown,
@@ -194,12 +193,6 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/configuracoes/notificacoes">
-            <Bell aria-hidden />
-            Notificações
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
           <Link href="/configuracoes">
             <Settings aria-hidden />
             Configurações
@@ -216,7 +209,7 @@ function UserMenu({ collapsed }: { collapsed: boolean }) {
  */
 function isItemActive(pathname: string, item: NavItem): boolean {
   if (item.children) return pathname === item.href || (isActivePath(pathname, item.href) && !item.children.some((c) => isActivePath(pathname, c.href)));
-  return isActivePath(pathname, item.href);
+  return isActivePath(pathname, item.href) || (item.related ?? []).some((href) => isActivePath(pathname, href));
 }
 
 function NavLink({

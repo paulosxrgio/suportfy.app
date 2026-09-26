@@ -2,14 +2,13 @@
 
 import type { ComponentType } from "react";
 import { NotFoundContent } from "@/components/shared/not-found-content";
-import { AuditSection, CostsSection, HoursSection, NotificationsSection, OrganizationSection, SecuritySection, StoresSection } from "./sections/general";
+import { AuditSection, CostsSection, OrganizationSection, SecuritySection, StoresSection } from "./sections/general";
 import { AiSection, ApiSection, EmailSection, ShopifySection, WebhooksSection, WhatsAppSection } from "./sections/integrations";
 import {
   AgentSettingsSection,
   AutomationsSettingsSection,
   KnowledgeSettingsSection,
   QuickRepliesSection,
-  SlaSection,
   TagsSection,
   TeamSettingsSection,
   TemplatesSection,
@@ -18,8 +17,6 @@ import {
 const sectionComponents: Record<string, ComponentType> = {
   organizacao: OrganizationSection,
   lojas: StoresSection,
-  horarios: HoursSection,
-  notificacoes: NotificationsSection,
   shopify: ShopifySection,
   whatsapp: WhatsAppSection,
   email: EmailSection,
@@ -30,7 +27,6 @@ const sectionComponents: Record<string, ComponentType> = {
   conhecimento: KnowledgeSettingsSection,
   automacoes: AutomationsSettingsSection,
   "equipe-permissoes": TeamSettingsSection,
-  sla: SlaSection,
   tags: TagsSection,
   "respostas-rapidas": QuickRepliesSection,
   templates: TemplatesSection,

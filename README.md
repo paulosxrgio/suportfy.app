@@ -41,13 +41,13 @@ Abra <http://localhost:3000>. A raiz redireciona para `/visao-geral`.
 | `/inbox`, `/inbox/whatsapp`, `/inbox/email` | Tela central. No menu, a Inbox tem WhatsApp e E-mail como subitens; `/inbox` reúne os dois canais. A lista tem busca, um seletor de recorte (Para revisar, Com a IA, Com a equipe, Abertas, Não lidas, Aguardando resposta, Resolvidas, Menções, Participando, Não atribuídas, Todas) e filtros por prioridade, responsável, tags e loja. A conversa (`/inbox/<canal>/conversa/<id>`) ocupa a área principal: o estado da IA aparece numa linha discreta, e motivo do encaminhamento, detalhes da execução e fontes ficam recolhidos. O painel do cliente e dos pedidos pode ser recolhido. |
 | `/tickets` | Fora do menu (são as mesmas conversas da Inbox); acessível pelo menu "…" da lista e por "Ver ticket" na conversa. Tabela com busca, filtros (status, prioridade, loja, canal, categoria, responsável), ordenação, detalhe em painel e criação manual |
 | `/clientes` e `/clientes/[id]` | Lista com busca por nome, e-mail ou telefone, e perfil com conversas, pedidos e observações |
-| `/pedidos` | Pedidos com filtros e detalhe (itens, endereço parcialmente oculto, pagamento, rastreio e ações bloqueadas) |
+| `/pedidos` | Fora do menu: os pedidos são consultados na conversa e no perfil do cliente; a lista completa abre por "Ver todos os pedidos" em Clientes. Pedidos com filtros e detalhe (itens, endereço parcialmente oculto, pagamento, rastreio e ações bloqueadas) |
 | `/automacoes`, `/automacoes/nova`, `/automacoes/[id]` | Lista de regras e construtor com gatilho, condições e ações |
 | `/conhecimento` | Documentos, políticas e FAQs com status, versões e disponibilidade para o agente |
 | `/agente` | Modos (automático, copiloto, desativado), ativação por loja e canal, identidade, tom, instruções, limites, transferências, fontes e prévia de resposta |
 | `/relatorios` | Estrutura de métricas. Sem dados reais, mostra estados vazios; há um exemplo ilustrativo opcional e rotulado |
-| `/equipe` | Membros, convites, equipes e matriz de permissões |
-| `/configuracoes/[secao]` | 21 seções: Organização, Lojas, Horários, Notificações, Shopify, WhatsApp, E-mail, Inteligência Artificial, Webhooks, API, Agente de IA, Conhecimento, Automações, SLA, Tags, Respostas rápidas, Templates, Equipe e permissões, Segurança, Auditoria e Custos |
+| `/equipe` | Fora do menu: aberta por Configurações › Equipe e permissões e pelo menu da conta. Membros, convites, equipes e matriz de permissões |
+| `/configuracoes/[secao]` | 18 seções: Organização, Lojas, Shopify, WhatsApp, E-mail, Inteligência Artificial, Webhooks, API, Agente de IA, Conhecimento, Automações, Tags, Respostas rápidas, Templates, Equipe e permissões, Segurança, Auditoria e Custos |
 
 ## O que é demonstrativo
 
