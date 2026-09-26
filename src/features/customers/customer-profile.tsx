@@ -19,6 +19,7 @@ import { reasonLabels } from "@/lib/demo/labels";
 import { customerStats, orderTotal } from "@/lib/demo/selectors";
 import { CURRENT_USER_ID, useDataset, useDemo } from "@/lib/demo/store";
 import { formatCurrency, formatDateShort, formatDateTime, formatListTime, maskEmail, maskPhone } from "@/lib/format";
+import { conversationHref } from "@/features/inbox/views";
 
 export function CustomerProfile({ id }: { id: string }) {
   const { state, actions } = useDemo();
@@ -69,7 +70,7 @@ export function CustomerProfile({ id }: { id: string }) {
         actions={
           conversations[0] && (
             <Button asChild size="sm" variant="primary">
-              <Link href={`/inbox/${conversations[0].id}`}>
+              <Link href={conversationHref(conversations[0])}>
                 <MessagesSquare className="size-3.5" aria-hidden />
                 Abrir conversa mais recente
               </Link>
@@ -101,7 +102,7 @@ export function CustomerProfile({ id }: { id: string }) {
                 <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
                   {conversations.map((c) => (
                     <li key={c.id}>
-                      <Link href={`/inbox/${c.id}`} className="focus-ring flex items-start gap-3 px-4 py-3 hover:bg-canvas">
+                      <Link href={conversationHref(c)} className="focus-ring flex items-start gap-3 px-4 py-3 hover:bg-canvas">
                         <ChannelIcon channel={c.channel} className="mt-1 text-ink-3" />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">

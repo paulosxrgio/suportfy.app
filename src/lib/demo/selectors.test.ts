@@ -5,10 +5,12 @@ import {
   emptyInboxFilters,
   filterConversations,
   inQueue,
+  inView,
   orderTotal,
   slaInfo,
   sortConversations,
   ticketStatus,
+  viewHasQueues,
 } from "./selectors";
 
 const lookup = {
@@ -108,5 +110,52 @@ describe("clientes e pedidos", () => {
 
     const sofia = customers.find((c) => c.id === "cu-15")!;
     expect(customerStats(sofia, orders, conversations).totalSpent).toBe(0);
+  });
+});
+
+describe("visões de conversas", () => {
+  const ctx = { currentUserId: "u-marina", currentUserFirstName: "Marina" };
+  const ids = (view: Parameters<typeof inView>[1]) => conversations.filter((c) => inView(c, view, ctx)).map((c) => c.id);
+
+  it("separa os canais sem sobreposição", () => {
+    const whatsapp = ids({ kind: "canal", channel: "whatsapp", folder: "todas" });
+    const email = ids({ kind: "canal", channel: "email", folder: "todas" });
+    expect(whatsapp.length + email.length).toBe(conversations.length);
+    expect(whatsapp.filter((id) => email.includes(id))).toEqual([]);
+  });
+
+  it("menções vêm de notas com @nome de quem está usando", () => {
+    expect(ids({ kind: "mencoes" })).toEqual(["cv-02"]);
+  });
+
+  it("participando inclui atribuídas e conversas com nota própria", () => {
+    expect(ids({ kind: "participando" }).sort()).toEqual(["cv-08", "cv-11"]);
+  });
+
+  it("não atribuídas são as que esperam uma pessoa sem responsável", () => {
+    for (const id of ids({ kind: "nao-atribuidas" })) {
+      const c = byId(id);
+      expect(c.assigneeId, id).toBeNull();
+      expect(["needs_review", "agent_error", "agent_paused"], id).toContain(c.state);
+    }
+  });
+
+  it("pastas do canal: não lidas, aguardando resposta e resolvidas", () => {
+    for (const id of ids({ kind: "canal", channel: "email", folder: "nao-lidas" })) expect(byId(id).unreadCount, id).toBeGreaterThan(0);
+    for (const id of ids({ kind: "canal", channel: "whatsapp", folder: "resolvidas" })) {
+      expect(["auto_resolved", "resolved"], id).toContain(byId(id).state);
+    }
+    for (const id of ids({ kind: "canal", channel: "whatsapp", folder: "aguardando" })) {
+      const c = byId(id);
+      const last = c.timeline.filter((t) => t.type === "message").at(-1);
+      expect(last?.type === "message" && last.author, id).toBe("customer");
+    }
+  });
+
+  it("abas de supervisão só aparecem nas visões completas", () => {
+    expect(viewHasQueues({ kind: "todas" })).toBe(true);
+    expect(viewHasQueues({ kind: "canal", channel: "email", folder: "todas" })).toBe(true);
+    expect(viewHasQueues({ kind: "canal", channel: "email", folder: "nao-lidas" })).toBe(false);
+    expect(viewHasQueues({ kind: "mencoes" })).toBe(false);
   });
 });

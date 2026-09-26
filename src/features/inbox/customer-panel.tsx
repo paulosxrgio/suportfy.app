@@ -25,6 +25,7 @@ import type { Conversation } from "@/lib/demo/types";
 import { formatCurrency, formatDateShort, formatDateTime, formatListTime, maskEmail, maskPhone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { OrderStatusBadges } from "@/features/orders/order-detail";
+import { conversationHref } from "./views";
 
 function PanelSection({ title, action, children, defaultOpen = true }: { title: string; action?: ReactNode; children: ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -216,7 +217,7 @@ export function CustomerPanel({ conversation, onOpenOrder }: { conversation: Con
           <ul className="-mx-2 space-y-0.5">
             {history.map((h) => (
               <li key={h.id}>
-                <Link href={`/inbox/${h.id}`} className="focus-ring block rounded-md px-2 py-1.5 hover:bg-subtle">
+                <Link href={conversationHref(h)} className="focus-ring block rounded-md px-2 py-1.5 hover:bg-subtle">
                   <span className="flex items-center justify-between gap-2">
                     <span className="truncate text-ink">{h.subject}</span>
                     <span className="shrink-0 text-xs text-ink-3">{formatListTime(h.lastActivityAt)}</span>

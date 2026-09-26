@@ -9,13 +9,13 @@ import { useDemo } from "@/lib/demo/store";
 import { cn } from "@/lib/utils";
 import { DemoStrip } from "./demo-strip";
 import { Logo } from "./logo";
-import { isActivePath, navGroups } from "./nav-config";
+import { isActivePath, navItems } from "./nav-config";
 import { SidebarContent } from "./sidebar";
 
 function MobileTopBar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const current = navGroups.flatMap((g) => g.items).find((i) => isActivePath(pathname, i.href));
+  const current = navItems.find((i) => isActivePath(pathname, i.href));
   return (
     <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line bg-surface px-3 lg:hidden">
       <Sheet open={open} onOpenChange={setOpen}>
@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside
         className={cn(
           "hidden shrink-0 border-r border-line bg-surface transition-[width] duration-150 lg:block",
-          collapsed ? "w-[60px]" : "w-[248px]",
+          collapsed ? "w-[60px]" : "w-[264px]",
         )}
         aria-label="Menu lateral"
       >

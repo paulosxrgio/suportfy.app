@@ -35,7 +35,8 @@ import { roleMeta } from "@/lib/demo/labels";
 import { CURRENT_USER_ID, stores, useDataset, useDemo } from "@/lib/demo/store";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
-import { isActivePath, navGroups } from "./nav-config";
+import { ConversationNav } from "./conversation-nav";
+import { isActivePath, navItems } from "./nav-config";
 
 const triggerBase =
   "focus-ring flex w-full items-center gap-2 rounded-md text-left transition-colors hover:bg-subtle data-[state=open]:bg-subtle";
@@ -271,61 +272,46 @@ export function SidebarContent({
       </div>
 
       <nav aria-label="Navegação principal" className={cn("min-h-0 flex-1 overflow-y-auto pb-3 scrollbar-thin", collapsed ? "px-2" : "px-3")}>
-        {navGroups.map((group, gi) => (
-          <div key={gi} className={cn(gi > 0 && "mt-4")}>
-            {group.label &&
-              (collapsed ? (
-                <div className="mx-auto mb-2 h-px w-6 bg-line" aria-hidden />
-              ) : (
-                <p className="mb-1 px-2 text-[11.5px] font-medium text-ink-4">{group.label}</p>
-              ))}
-            <ul className="flex flex-col gap-0.5">
-              {group.items.map((item) => {
-                const active = isActivePath(pathname, item.href);
-                const Icon = item.icon;
-                const badge = item.reviewBadge && reviewCount > 0 ? reviewCount : null;
-                const link = (
-                  <Link
-                    href={item.href}
-                    onClick={onNavigate}
-                    aria-current={active ? "page" : undefined}
-                    aria-label={collapsed ? `${item.label}${badge ? `, ${badge} para revisar` : ""}` : undefined}
-                    className={cn(
-                      "focus-ring relative flex h-8 items-center gap-2.5 rounded-md text-[13.5px] transition-colors",
-                      collapsed ? "w-9 justify-center" : "px-2",
-                      active ? "bg-primary-50 font-medium text-primary-800" : "text-ink-2 hover:bg-subtle hover:text-ink",
-                    )}
-                  >
-                    <Icon className={cn("size-4 shrink-0", active ? "text-primary-600" : "text-ink-3")} aria-hidden />
-                    {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
-                    {badge !== null &&
-                      (collapsed ? (
-                        <span className="absolute top-1 right-1 size-2 rounded-full bg-warning-500 ring-2 ring-surface" aria-hidden />
-                      ) : (
-                        <span
-                          className="rounded-[5px] bg-warning-50 px-1.5 text-[11.5px] font-semibold text-warning-700 tabular-nums ring-1 ring-warning-200 ring-inset"
-                          aria-label={`${badge} para revisar`}
-                        >
-                          {badge}
-                        </span>
-                      ))}
-                  </Link>
-                );
-                return (
-                  <li key={item.href}>
-                    {collapsed ? (
-                      <Tooltip content={item.label} side="right">
-                        {link}
-                      </Tooltip>
-                    ) : (
-                      link
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+        <ul className="flex flex-col gap-0.5">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            if (item.conversations && !collapsed) {
+              return <ConversationNav key={item.href} icon={Icon} onNavigate={onNavigate} />;
+            }
+            const active = isActivePath(pathname, item.href);
+            const badge = item.conversations && reviewCount > 0 ? reviewCount : null;
+            const link = (
+              <Link
+                href={item.href}
+                onClick={onNavigate}
+                aria-current={active ? "page" : undefined}
+                aria-label={collapsed ? `${item.label}${badge ? `, ${badge} para revisar` : ""}` : undefined}
+                className={cn(
+                  "focus-ring relative flex h-8 items-center gap-2.5 rounded-md text-[13.5px] transition-colors",
+                  collapsed ? "w-9 justify-center" : "px-2",
+                  active ? "bg-primary-50 font-medium text-primary-800" : "text-ink-2 hover:bg-subtle hover:text-ink",
+                )}
+              >
+                <Icon className={cn("size-4 shrink-0", active ? "text-primary-600" : "text-ink-3")} aria-hidden />
+                {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+                {badge !== null && (
+                  <span className="absolute top-1 right-1 size-2 rounded-full bg-warning-500 ring-2 ring-surface" aria-hidden />
+                )}
+              </Link>
+            );
+            return (
+              <li key={item.href}>
+                {collapsed ? (
+                  <Tooltip content={item.label} side="right">
+                    {link}
+                  </Tooltip>
+                ) : (
+                  link
+                )}
+              </li>
+            );
+          })}
+        </ul>
       </nav>
 
       <div className={cn("flex shrink-0 flex-col gap-2 border-t border-line py-3", collapsed ? "items-center px-2" : "px-3")}>

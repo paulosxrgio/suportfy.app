@@ -1025,6 +1025,13 @@ export const conversations: Conversation[] = [
         text: "IA preparou uma resposta para aprovação",
         detail: "Modo copiloto: nada é enviado sem aprovação de uma pessoa.",
       },
+      {
+        id: "n-0205",
+        type: "note",
+        authorId: "u-rafael",
+        at: demoTime("13:11"),
+        body: "@Marina, o cliente viaja no dia 3/10. Se aprovar a resposta, vale acompanhar o rastreio até a entrega.",
+      },
     ],
   },
   {
@@ -1320,7 +1327,7 @@ export const conversations: Conversation[] = [
     tags: ["atraso", "procon"],
     unreadCount: 1,
     createdAt: demoTime("12:05"),
-    lastActivityAt: demoTime("12:06"),
+    lastActivityAt: demoTime("12:20"),
     slaDueAt: demoTime("12:35"),
     slaPaused: false,
     handoff: {
@@ -1376,6 +1383,13 @@ export const conversations: Conversation[] = [
         at: demoTime("12:06"),
         text: "IA encaminhou para revisão humana",
         detail: "Reclamação formal ou menção a órgãos de defesa do consumidor sempre vai para uma pessoa.",
+      },
+      {
+        id: "n-0806",
+        type: "note",
+        authorId: "u-marina",
+        at: demoTime("12:20"),
+        body: "Pedi à Logística para confirmar o #AU1019 com a transportadora antes de responder ao cliente.",
       },
     ],
   },

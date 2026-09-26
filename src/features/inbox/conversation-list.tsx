@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowDownUp, Bot, CircleAlert, Inbox as InboxIcon, ListFilter, Lock, MessageCircle, SearchX, X } from "lucide-react";
-import { DataGate, DemoBadge } from "@/components/shared/demo";
+import { ArrowDownUp, Bot, ChevronRight, CircleAlert, Inbox as InboxIcon, ListFilter, Lock, MessageCircle, SearchX, X } from "lucide-react";
+import { DataGate } from "@/components/shared/demo";
 import {
   AssigneeLabel,
   ChannelIcon,
@@ -10,13 +10,12 @@ import {
   SlaIndicator,
   StateBadge,
   StoreDot,
-  TagChip,
   storeById,
 } from "@/components/shared/domain";
 import { SearchField } from "@/components/shared/filters";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Switch } from "@/components/ui/controls";
-import { EmptyState, ListSkeleton } from "@/components/ui/data";
+import { Avatar, EmptyState, ListSkeleton } from "@/components/ui/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,18 +29,27 @@ import {
   Tooltip,
 } from "@/components/ui/menu";
 import { channelLabels, conversationStateMeta, priorityMeta } from "@/lib/demo/labels";
-import { emptyInboxFilters, inQueue, type InboxFilters, type InboxQueue, type InboxSort } from "@/lib/demo/selectors";
+import {
+  emptyInboxFilters,
+  inQueue,
+  slaInfo,
+  type InboxFilters,
+  type InboxQueue,
+  type InboxSort,
+  type InboxView,
+} from "@/lib/demo/selectors";
 import { CURRENT_USER_ID, stores, useDataset, useDemo } from "@/lib/demo/store";
 import type { Channel, Conversation, ConversationState, Priority } from "@/lib/demo/types";
 import { formatListTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useInbox } from "./inbox-shell";
+import { viewTitle } from "./views";
 
-const queues: { id: Exclude<InboxQueue, "todas">; label: string; hint: string }[] = [
+const queues: { id: InboxQueue; label: string; hint: string }[] = [
   { id: "revisao", label: "Revisão", hint: "Encaminhadas pela IA para uma pessoa ou com erro no agente" },
   { id: "ia", label: "Com a IA", hint: "Conduzidas pelo agente de IA, incluindo as que aguardam o cliente" },
   { id: "equipe", label: "Equipe", hint: "Assumidas por uma pessoa ou com a IA pausada" },
-  { id: "resolvidas", label: "Resolvidas", hint: "Resolvidas pela IA ou pela equipe" },
+  { id: "todas", label: "Todas", hint: "Todas as conversas desta visão, inclusive as resolvidas" },
 ];
 
 const sortLabels: Record<InboxSort, string> = {
@@ -50,26 +58,11 @@ const sortLabels: Record<InboxSort, string> = {
   sla: "SLA mais próximo",
 };
 
-function QueueSelector() {
+/** Abas de supervisão, no lugar das abas "Minhas / Não atribuídas / Todas" de outras ferramentas. */
+function QueueTabs() {
   const { filters, setFilters, filteredAll } = useInbox();
-  const allActive = filters.queue === "todas";
   return (
-    <div className="px-3 pb-3" role="group" aria-label="Filas da Inbox">
-      <div className="mb-1.5 flex items-center justify-between">
-        <p className="text-xs font-medium text-ink-3">Filas de supervisão</p>
-        <button
-          type="button"
-          aria-pressed={allActive}
-          onClick={() => setFilters((f) => ({ ...f, queue: "todas" }))}
-          className={cn(
-            "focus-ring rounded px-1.5 py-0.5 text-xs font-medium",
-            allActive ? "bg-primary-50 text-primary-800 ring-1 ring-primary-300" : "text-ink-3 hover:bg-subtle hover:text-ink",
-          )}
-        >
-          Todas · {filteredAll.length}
-        </button>
-      </div>
-      <div className="grid grid-cols-4 gap-1">
+    <div className="flex gap-4 border-b border-line px-3" role="group" aria-label="Filas de supervisão">
       {queues.map((q) => {
         const count = filteredAll.filter((c) => inQueue(c, q.id)).length;
         const active = filters.queue === q.id;
@@ -81,24 +74,23 @@ function QueueSelector() {
               aria-pressed={active}
               onClick={() => setFilters((f) => ({ ...f, queue: q.id }))}
               className={cn(
-                "focus-ring flex flex-col items-start rounded-md border px-2 py-1.5 text-left transition-colors",
-                active ? "border-primary-500 bg-primary-50 ring-1 ring-primary-500" : "border-line hover:border-line-strong hover:bg-canvas",
+                "focus-ring relative -mb-px flex h-9 shrink-0 items-center gap-1.5 border-b-2 text-[13px] transition-colors",
+                active ? "border-primary-600 font-medium text-ink" : "border-transparent text-ink-3 hover:text-ink",
               )}
             >
+              {q.label}
               <span
                 className={cn(
-                  "text-base leading-5 font-semibold tabular-nums",
-                  attention ? "text-warning-700" : active ? "text-primary-800" : "text-ink",
+                  "rounded-full px-1.5 text-[11px] leading-[18px] font-medium tabular-nums",
+                  attention ? "bg-warning-50 text-warning-700" : active ? "bg-primary-50 text-primary-800" : "bg-muted text-ink-3",
                 )}
               >
                 {count}
               </span>
-              <span className={cn("w-full truncate text-[11.5px]", active ? "text-primary-800" : "text-ink-3")}>{q.label}</span>
             </button>
           </Tooltip>
         );
       })}
-      </div>
     </div>
   );
 }
@@ -121,7 +113,7 @@ function activeFilterCount(f: InboxFilters) {
 }
 
 function FiltersPopover() {
-  const { filters, setFilters } = useInbox();
+  const { filters, setFilters, view } = useInbox();
   const { state } = useDemo();
   const { members } = useDataset();
   const count = activeFilterCount(filters);
@@ -164,6 +156,7 @@ function FiltersPopover() {
               </CheckRow>
             ))}
           </fieldset>
+          {view.kind !== "canal" && (
           <fieldset>
             <legend className="mb-1 px-1 text-xs font-medium text-ink-3">Canal</legend>
             {(["whatsapp", "email"] as Channel[]).map((c) => (
@@ -173,6 +166,7 @@ function FiltersPopover() {
               </CheckRow>
             ))}
           </fieldset>
+          )}
           {state.store === "all" && (
             <fieldset>
               <legend className="mb-1 px-1 text-xs font-medium text-ink-3">Loja</legend>
@@ -275,77 +269,142 @@ function usePreview(c: Conversation) {
   return { text: last.body, className: "text-ink-2" };
 }
 
+/** Avatar do cliente com o canal sobreposto, como nas listas de conversas de outras ferramentas de atendimento. */
+function CustomerAvatar({ name, channel }: { name: string; channel: Channel }) {
+  return (
+    <span className="relative h-fit shrink-0">
+      <Avatar name={name} />
+      <span className="absolute -right-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-surface ring-1 ring-line">
+        <ChannelIcon channel={channel} className={cn("size-2.5", channel === "whatsapp" ? "text-success-700" : "text-primary-700")} />
+      </span>
+    </span>
+  );
+}
+
+const ATTENTION_STATES: ConversationState[] = ["needs_review", "agent_error", "agent_paused"];
+
 function ConversationItem({ conversation: c, selected }: { conversation: Conversation; selected: boolean }) {
+  const { view, hrefFor } = useInbox();
   const { allCustomers } = useDataset();
   const customer = allCustomers.find((cu) => cu.id === c.customerId);
   const preview = usePreview(c);
   const store = storeById(c.storeId);
   const unread = c.unreadCount > 0;
   const PreviewIcon = preview.icon;
+  const sla = slaInfo(c);
+  const showStatusRow = ATTENTION_STATES.includes(c.state) || sla.status === "risco" || sla.status === "vencido";
+  const crossChannel = view.kind !== "canal";
 
   return (
     <li>
       <Link
-        href={`/inbox/${c.id}`}
+        href={hrefFor(c.id)}
         aria-current={selected ? "page" : undefined}
         className={cn(
-          "focus-ring relative block border-b border-line px-3 py-2.5 transition-colors focus-visible:-outline-offset-2",
+          "focus-ring relative flex gap-3 border-b border-line px-3 py-3 transition-colors focus-visible:-outline-offset-2",
           selected ? "bg-primary-50/70" : "hover:bg-canvas",
         )}
       >
         {selected && <span className="absolute inset-y-0 left-0 w-0.5 bg-primary-600" aria-hidden />}
-        <div className="flex items-center gap-1.5">
-          {unread && <span className="size-2 shrink-0 rounded-full bg-primary-600" aria-label="Não lida" />}
-          <span className={cn("min-w-0 flex-1 truncate text-[13.5px]", unread ? "font-semibold text-ink" : "font-medium text-ink")}>
-            {customer?.name ?? "Cliente"}
-          </span>
-          <PriorityIcon priority={c.priority} />
-          <span className={cn("shrink-0 text-xs tabular-nums", unread ? "font-medium text-ink-2" : "text-ink-3")}>
-            {formatListTime(c.lastActivityAt)}
-          </span>
-        </div>
-        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-3">
-          <ChannelIcon channel={c.channel} />
-          <StoreDot storeId={c.storeId} />
-          <span className="min-w-0 truncate">
-            {store?.name} · #{c.ticketNumber}
-          </span>
-          <span className="ml-auto shrink-0">
-            <AssigneeLabel conversation={c} showName={false} />
-          </span>
-        </div>
-        <p className={cn("mt-1 flex min-w-0 items-center gap-1 text-[13px]", preview.className)}>
-          {PreviewIcon && <PreviewIcon className="size-3.5 shrink-0 opacity-80" aria-hidden />}
-          <span className="truncate">
-            {preview.prefix && <span className="font-medium">{preview.prefix}</span>}
-            {preview.text}
-          </span>
-        </p>
-        <div className="mt-1.5 flex items-center gap-1.5">
-          <StateBadge state={c.state} />
-          <span className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
-            {c.tags.slice(0, 2).map((t) => (
-              <TagChip key={t} name={t} />
-            ))}
-            {c.tags.length > 2 && <span className="text-[11.5px] text-ink-3">+{c.tags.length - 2}</span>}
-          </span>
-          <SlaIndicator conversation={c} />
+        <CustomerAvatar name={customer?.name ?? "Cliente"} channel={c.channel} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 text-[11.5px] text-ink-3">
+            {crossChannel && (
+              <span className="inline-flex shrink-0 items-center gap-1 font-medium text-ink-2">
+                <ChannelIcon channel={c.channel} className="size-3" />
+                {channelLabels[c.channel]}
+                <span className="font-normal text-ink-4" aria-hidden>
+                  ·
+                </span>
+              </span>
+            )}
+            <StoreDot storeId={c.storeId} className="size-1.5" />
+            <span className="min-w-0 truncate">{store?.name}</span>
+            <span className={cn("ml-auto shrink-0 tabular-nums", unread ? "font-medium text-primary-700" : "text-ink-3")}>
+              {formatListTime(c.lastActivityAt)}
+            </span>
+          </div>
+          <div className="mt-0.5 flex items-center gap-1.5">
+            <span className={cn("min-w-0 flex-1 truncate text-[13.5px] text-ink", unread ? "font-semibold" : "font-medium")}>
+              {customer?.name ?? "Cliente"}
+            </span>
+            <PriorityIcon priority={c.priority} />
+            {c.assigneeId && <AssigneeLabel conversation={c} showName={false} />}
+          </div>
+          <div className="mt-0.5 flex items-center gap-2">
+            <p className={cn("flex min-w-0 flex-1 items-center gap-1 text-[13px]", unread && !preview.icon ? "text-ink" : preview.className)}>
+              {PreviewIcon && <PreviewIcon className="size-3.5 shrink-0 opacity-80" aria-hidden />}
+              <span className="truncate">
+                {preview.prefix && <span className="font-medium">{preview.prefix}</span>}
+                {preview.text}
+              </span>
+            </p>
+            {unread && (
+              <span
+                className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-primary-600 px-1 text-[11px] font-semibold text-white tabular-nums"
+                aria-label={`${c.unreadCount} não ${c.unreadCount === 1 ? "lida" : "lidas"}`}
+              >
+                {c.unreadCount}
+              </span>
+            )}
+          </div>
+          {showStatusRow && (
+            <div className="mt-1.5 flex items-center gap-1.5">
+              {ATTENTION_STATES.includes(c.state) && <StateBadge state={c.state} />}
+              <SlaIndicator conversation={c} />
+            </div>
+          )}
         </div>
       </Link>
     </li>
   );
 }
 
+function ViewHeading() {
+  const { view } = useInbox();
+  const title = viewTitle(view);
+  return (
+    <h1 className="flex min-w-0 items-center gap-1.5 text-[15px] font-semibold text-ink">
+      {view.kind === "canal" && <ChannelIcon channel={view.channel} className="size-4 text-ink-3" />}
+      {title.parent && (
+        <>
+          <span className="shrink-0 font-medium text-ink-3">{title.parent}</span>
+          <ChevronRight className="size-3.5 shrink-0 text-ink-4" aria-hidden />
+        </>
+      )}
+      <span className="truncate">{title.label}</span>
+    </h1>
+  );
+}
+
+function emptyCopy(view: InboxView): { title: string; description: string } {
+  switch (view.kind) {
+    case "mencoes":
+      return { title: "Nenhuma menção", description: "Quando alguém da equipe mencionar você em uma nota interna, a conversa aparece aqui." };
+    case "participando":
+      return { title: "Você não participa de nenhuma conversa", description: "Conversas atribuídas a você ou com uma nota ou mensagem sua aparecem aqui." };
+    case "nao-atribuidas":
+      return { title: "Tudo atribuído", description: "Nenhuma conversa espera uma pessoa sem responsável. A IA segue atendendo o restante." };
+    case "canal":
+      if (view.folder === "nao-lidas") return { title: "Nada não lido", description: `Todas as conversas de ${channelLabels[view.channel]} foram abertas.` };
+      if (view.folder === "aguardando") return { title: "Nenhum cliente aguardando", description: "Não há conversas em que o cliente escreveu por último." };
+      if (view.folder === "resolvidas") return { title: "Nenhuma conversa resolvida", description: "Conversas resolvidas pela IA ou pela equipe aparecem aqui." };
+      return { title: "Nenhuma conversa neste canal", description: "" };
+    default:
+      return { title: "Nenhuma conversa", description: "" };
+  }
+}
+
 export function ConversationList() {
-  const { filters, setFilters, sort, setSort, visible, selectedId } = useInbox();
+  const { view, hasQueues, filters, setFilters, sort, setSort, visible, selectedId } = useInbox();
   const { isEmpty } = useDataset();
   const hasFilters = activeFilterCount(filters) > 0 || filters.query.length > 0;
+  const copy = emptyCopy(view);
 
   return (
     <>
-      <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-        <h1 className="text-base font-semibold text-ink">Inbox</h1>
-        <DemoBadge label="Demonstração" />
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-3">
+        <ViewHeading />
         <div className="ml-auto flex items-center gap-0.5">
           <DropdownMenu>
             <Tooltip content={`Ordenar: ${sortLabels[sort]}`}>
@@ -369,7 +428,7 @@ export function ConversationList() {
           <FiltersPopover />
         </div>
       </div>
-      <div className="px-3 pb-3">
+      <div className="px-3 pt-2.5 pb-2.5">
         <SearchField
           label="Buscar conversas"
           placeholder="Buscar cliente, pedido, ticket ou mensagem"
@@ -377,9 +436,9 @@ export function ConversationList() {
           onValueChange={(query) => setFilters((f) => ({ ...f, query }))}
         />
       </div>
-      <QueueSelector />
       <ActiveFilterChips />
-      <div className="min-h-0 flex-1 overflow-y-auto border-t border-line scrollbar-thin">
+      {hasQueues && !isEmpty && <QueueTabs />}
+      <div className={cn("min-h-0 flex-1 overflow-y-auto scrollbar-thin", !hasQueues && "border-t border-line")}>
         <DataGate skeleton={<ListSkeleton rows={7} />}>
           {isEmpty ? (
             <EmptyState
@@ -402,14 +461,14 @@ export function ConversationList() {
               <EmptyState
                 icon={SearchX}
                 title="Nenhuma conversa encontrada"
-                description="Nenhuma conversa desta fila corresponde à busca ou aos filtros aplicados."
+                description="Nenhuma conversa desta visão corresponde à busca ou aos filtros aplicados."
                 action={
                   <Button size="sm" onClick={() => setFilters((f) => ({ ...emptyInboxFilters, queue: f.queue }))}>
                     Limpar busca e filtros
                   </Button>
                 }
               />
-            ) : (
+            ) : hasQueues && filters.queue !== "todas" ? (
               <EmptyState
                 icon={InboxIcon}
                 title={filters.queue === "revisao" ? "Nada para revisar agora" : "Fila vazia"}
@@ -424,6 +483,8 @@ export function ConversationList() {
                   </Button>
                 }
               />
+            ) : (
+              <EmptyState icon={InboxIcon} title={copy.title} description={copy.description || undefined} />
             )
           ) : (
             <ul aria-label="Conversas">

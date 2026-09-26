@@ -38,7 +38,7 @@ Abra <http://localhost:3000>. A raiz redireciona para `/visao-geral`.
 | Rota | Conteúdo |
 | --- | --- |
 | `/visao-geral` | Resumo do agente, indicadores, exceções que pedem atenção, estado real das integrações (nenhuma conectada), conversas por canal e atividade recente |
-| `/inbox` e `/inbox/[id]` | Três áreas: lista com filas de supervisão (Revisão, Com a IA, Equipe, Resolvidas), busca e filtros; conversa com respostas da IA, fontes consultadas, notas internas, eventos e anexos; painel do cliente com resumo da IA, pedidos, histórico e observações |
+| `/inbox/…` (Conversas) | Navegação inspirada no Chatwoot. No menu lateral, **Conversas** traz Todas, Menções, Participando e Não atribuídas, e **Canais** separa **WhatsApp** e **E-mail**, cada um com Todas as conversas, Não lidas, Aguardando resposta e Resolvidas. A lista fica no centro, com busca, filtros e abas de supervisão (Revisão, Com a IA, Equipe, Todas); a conversa abre na área principal; o painel do cliente e dos pedidos pode ser recolhido. Rotas: `/inbox`, `/inbox/mencoes`, `/inbox/whatsapp/nao-lidas`, `/inbox/email/conversa/cv-02` etc. |
 | `/tickets` | Tabela com busca, filtros (status, prioridade, loja, canal, categoria, responsável), ordenação, detalhe em painel e criação manual |
 | `/clientes` e `/clientes/[id]` | Lista com busca por nome, e-mail ou telefone, e perfil com conversas, pedidos e observações |
 | `/pedidos` | Pedidos com filtros e detalhe (itens, endereço parcialmente oculto, pagamento, rastreio e ações bloqueadas) |
@@ -88,7 +88,7 @@ src/
 
 - Foco visível em todos os controles, atalho "Pular para o conteúdo", rótulos em campos e diálogos com foco preso (Radix).
 - Gráficos com legenda, tooltip por teclado e alternativa em tabela.
-- Desktop e tablet como alvo principal. Abaixo de 1024 px, a navegação vira um drawer e a Inbox alterna entre lista e conversa, com o painel do cliente em drawer. Abaixo de 1280 px, o painel do cliente também abre em drawer.
+- Desktop e tablet como alvo principal. Abaixo de 1024 px, a navegação vira um drawer e as Conversas alternam entre lista e conversa. Abaixo de 1280 px, o painel do cliente abre em drawer; acima disso, pode ser recolhido pelo botão no cabeçalho da conversa.
 
 ## Próximos passos
 

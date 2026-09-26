@@ -211,3 +211,80 @@ export function isToday(iso: string): boolean {
   const offset = -3 * 60 * 60 * 1000;
   return Math.floor((Date.parse(iso) + offset) / day) === Math.floor((DEMO_NOW + offset) / day);
 }
+
+/* ---------- Visões da navegação de conversas ---------- */
+
+/** Recortes de um canal, no mesmo espírito das pastas do menu lateral. */
+export type ChannelFolder = "todas" | "nao-lidas" | "aguardando" | "resolvidas";
+
+export type InboxView =
+  | { kind: "todas" }
+  | { kind: "mencoes" }
+  | { kind: "participando" }
+  | { kind: "nao-atribuidas" }
+  | { kind: "canal"; channel: Channel; folder: ChannelFolder };
+
+export interface ViewContext {
+  currentUserId: string;
+  /** Primeiro nome de quem está usando, para reconhecer "@Nome" nas notas. */
+  currentUserFirstName: string;
+}
+
+const RESOLVED_STATES: ConversationState[] = ["auto_resolved", "resolved"];
+/** Estados em que a conversa espera uma pessoa e ninguém da equipe a assumiu. */
+const NEEDS_HUMAN_STATES: ConversationState[] = ["needs_review", "agent_error", "agent_paused"];
+
+export function isResolved(conversation: Conversation): boolean {
+  return RESOLVED_STATES.includes(conversation.state);
+}
+
+export function mentionsUser(conversation: Conversation, firstName: string): boolean {
+  const pattern = new RegExp(`@${firstName}\\b`, "i");
+  return conversation.timeline.some((t) => t.type === "note" && pattern.test(t.body));
+}
+
+/** Atribuída a quem está usando, ou com mensagem ou nota escrita por essa pessoa. */
+export function isParticipating(conversation: Conversation, userId: string): boolean {
+  if (conversation.assigneeId === userId) return true;
+  return conversation.timeline.some(
+    (t) => (t.type === "note" && t.authorId === userId) || (t.type === "message" && t.author === "agent" && t.authorId === userId),
+  );
+}
+
+/** O cliente escreveu por último e a conversa não foi resolvida: alguém (IA ou equipe) deve responder. */
+export function isAwaitingReply(conversation: Conversation): boolean {
+  if (isResolved(conversation)) return false;
+  const last = [...conversation.timeline].reverse().find((t) => t.type === "message");
+  return last?.type === "message" && last.author === "customer";
+}
+
+export function inView(conversation: Conversation, view: InboxView, ctx: ViewContext): boolean {
+  switch (view.kind) {
+    case "todas":
+      return true;
+    case "mencoes":
+      return mentionsUser(conversation, ctx.currentUserFirstName);
+    case "participando":
+      return isParticipating(conversation, ctx.currentUserId);
+    case "nao-atribuidas":
+      return conversation.assigneeId === null && NEEDS_HUMAN_STATES.includes(conversation.state);
+    case "canal": {
+      if (conversation.channel !== view.channel) return false;
+      switch (view.folder) {
+        case "todas":
+          return true;
+        case "nao-lidas":
+          return conversation.unreadCount > 0;
+        case "aguardando":
+          return isAwaitingReply(conversation);
+        case "resolvidas":
+          return isResolved(conversation);
+      }
+    }
+  }
+}
+
+/** Visões em que as abas de supervisão (Revisão, Com a IA, Equipe, Todas) fazem sentido. */
+export function viewHasQueues(view: InboxView): boolean {
+  return view.kind === "todas" || (view.kind === "canal" && view.folder === "todas");
+}

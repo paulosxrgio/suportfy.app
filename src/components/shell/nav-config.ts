@@ -3,7 +3,7 @@ import {
   Bot,
   ChartColumn,
   House,
-  Inbox,
+  MessagesSquare,
   Package,
   Settings,
   Ticket,
@@ -17,46 +17,23 @@ export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  /** Mostra a contagem de conversas que precisam de revisão. */
-  reviewBadge?: boolean;
+  /** Item com a árvore de conversas (visões gerais e canais). */
+  conversations?: boolean;
 }
 
-export interface NavGroup {
-  label?: string;
-  items: NavItem[];
-}
-
-export const navGroups: NavGroup[] = [
-  {
-    items: [
-      { href: "/visao-geral", label: "Visão geral", icon: House },
-      { href: "/inbox", label: "Inbox", icon: Inbox, reviewBadge: true },
-    ],
-  },
-  {
-    label: "Atendimento",
-    items: [
-      { href: "/tickets", label: "Tickets", icon: Ticket },
-      { href: "/clientes", label: "Clientes", icon: Users },
-      { href: "/pedidos", label: "Pedidos", icon: Package },
-    ],
-  },
-  {
-    label: "Inteligência",
-    items: [
-      { href: "/agente", label: "Agente de IA", icon: Bot },
-      { href: "/conhecimento", label: "Conhecimento", icon: BookOpen },
-      { href: "/automacoes", label: "Automações", icon: Workflow },
-    ],
-  },
-  {
-    label: "Gestão",
-    items: [
-      { href: "/relatorios", label: "Relatórios", icon: ChartColumn },
-      { href: "/equipe", label: "Equipe", icon: UserCog },
-      { href: "/configuracoes", label: "Configurações", icon: Settings },
-    ],
-  },
+/** Menu principal, compacto e sem títulos de grupo. */
+export const navItems: NavItem[] = [
+  { href: "/visao-geral", label: "Visão geral", icon: House },
+  { href: "/inbox", label: "Conversas", icon: MessagesSquare, conversations: true },
+  { href: "/agente", label: "Agente de IA", icon: Bot },
+  { href: "/clientes", label: "Clientes", icon: Users },
+  { href: "/pedidos", label: "Pedidos", icon: Package },
+  { href: "/tickets", label: "Tickets", icon: Ticket },
+  { href: "/conhecimento", label: "Conhecimento", icon: BookOpen },
+  { href: "/automacoes", label: "Automações", icon: Workflow },
+  { href: "/relatorios", label: "Relatórios", icon: ChartColumn },
+  { href: "/equipe", label: "Equipe", icon: UserCog },
+  { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
 export function isActivePath(pathname: string, href: string): boolean {

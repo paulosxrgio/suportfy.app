@@ -6,25 +6,35 @@ import {
   emptyInboxFilters,
   filterConversations,
   inQueue,
+  inView,
   sortConversations,
+  viewHasQueues,
   type InboxFilters,
   type InboxQueue,
   type InboxSort,
+  type InboxView,
 } from "@/lib/demo/selectors";
 import { CURRENT_USER_ID, useDataset } from "@/lib/demo/store";
 import type { Conversation } from "@/lib/demo/types";
 import { cn } from "@/lib/utils";
 import { ConversationList } from "./conversation-list";
+import { useViewContext } from "./use-views";
+import { conversationPath, parseInboxPath, viewPath } from "./views";
 
 interface InboxContextValue {
+  view: InboxView;
+  /** Mostra as abas de supervisão (Revisão, Com a IA, Equipe, Todas). */
+  hasQueues: boolean;
   filters: InboxFilters;
   setFilters: (update: (f: InboxFilters) => InboxFilters) => void;
   sort: InboxSort;
   setSort: (sort: InboxSort) => void;
   visible: Conversation[];
-  /** Conversas que passam pelos filtros, ignorando a fila selecionada (para as contagens). */
+  /** Conversas da visão que passam pelos filtros, ignorando a aba selecionada (para as contagens). */
   filteredAll: Conversation[];
   selectedId?: string;
+  listHref: string;
+  hrefFor: (id: string) => string;
 }
 
 const InboxContext = createContext<InboxContextValue | null>(null);
@@ -36,11 +46,15 @@ export function useInbox() {
 }
 
 export function InboxShell({ children }: { children: ReactNode }) {
-  const params = useParams<{ id?: string }>();
-  const selectedId = params?.id;
+  const params = useParams<{ slug?: string[] }>();
+  const path = (params?.slug ?? []).join("/");
+  const route = useMemo(() => parseInboxPath(path ? path.split("/") : []), [path]);
+  const view: InboxView = useMemo(() => route?.view ?? { kind: "todas" }, [route]);
+  const selectedId = route?.conversationId;
   const { conversations, allCustomers } = useDataset();
+  const viewCtx = useViewContext();
 
-  // Abre na fila de revisão, exceto quando a conversa aberta pelo link está fora dela.
+  // Abre na aba de revisão, exceto quando a conversa aberta pelo link está fora dela.
   const [filters, setFiltersState] = useState<InboxFilters>(() => {
     const selected = conversations.find((c) => c.id === selectedId);
     const hasReview = conversations.some((c) => inQueue(c, "revisao"));
@@ -54,12 +68,16 @@ export function InboxShell({ children }: { children: ReactNode }) {
       customerName: (id: string) => allCustomers.find((c) => c.id === id)?.name ?? "",
       currentUserId: CURRENT_USER_ID,
     };
-    const filteredAll = filterConversations(conversations, filters, lookup, { ignoreQueue: true });
+    const hasQueues = viewHasQueues(view);
+    const inside = conversations.filter((c) => inView(c, view, viewCtx));
+    const filteredAll = filterConversations(inside, filters, lookup, { ignoreQueue: true });
     const visible = sortConversations(
-      filteredAll.filter((c) => inQueue(c, filters.queue)),
+      hasQueues ? filteredAll.filter((c) => inQueue(c, filters.queue)) : filteredAll,
       sort,
     );
     return {
+      view,
+      hasQueues,
       filters,
       setFilters: (update) => setFiltersState(update),
       sort,
@@ -67,8 +85,10 @@ export function InboxShell({ children }: { children: ReactNode }) {
       visible,
       filteredAll,
       selectedId,
+      listHref: viewPath(view),
+      hrefFor: (id) => conversationPath(view, id),
     };
-  }, [allCustomers, conversations, filters, sort, selectedId]);
+  }, [allCustomers, conversations, filters, sort, selectedId, view, viewCtx]);
 
   return (
     <InboxContext.Provider value={value}>

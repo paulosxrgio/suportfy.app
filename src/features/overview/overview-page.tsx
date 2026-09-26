@@ -29,6 +29,7 @@ import { useDataset } from "@/lib/demo/store";
 import type { Channel, Conversation, TimelineItem } from "@/lib/demo/types";
 import { formatListTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { conversationHref } from "@/features/inbox/views";
 
 function aiHandled(c: Conversation) {
   return inQueue(c, "ia") || c.state === "auto_resolved";
@@ -140,7 +141,7 @@ function Exceptions() {
       actions={
         <Button asChild size="xs" variant="ghost">
           <Link href="/inbox">
-            Abrir Inbox
+            Abrir conversas
             <ArrowRight className="size-3.5" aria-hidden />
           </Link>
         </Button>
@@ -157,7 +158,7 @@ function Exceptions() {
               const reason = c.state === "agent_error" ? c.error : (c.handoff?.reason ?? c.aiSummary);
               return (
                 <li key={c.id}>
-                  <Link href={`/inbox/${c.id}`} className="focus-ring flex items-start gap-3 px-4 py-3 hover:bg-canvas">
+                  <Link href={conversationHref(c)} className="focus-ring flex items-start gap-3 px-4 py-3 hover:bg-canvas">
                     <ChannelIcon channel={c.channel} className="mt-1 text-ink-3" />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -309,7 +310,7 @@ function RecentActivity() {
               const Icon = isAi ? Bot : isCustomer ? UserRound : UserCheck;
               return (
                 <li key={a.item.id}>
-                  <Link href={`/inbox/${a.conversation.id}`} className="focus-ring flex items-center gap-3 px-4 py-2.5 hover:bg-canvas">
+                  <Link href={conversationHref(a.conversation)} className="focus-ring flex items-center gap-3 px-4 py-2.5 hover:bg-canvas">
                     <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-full", isAi ? "bg-primary-50 text-primary-700" : "bg-subtle text-ink-3")}>
                       <Icon className="size-3.5" aria-hidden />
                     </span>
@@ -349,7 +350,7 @@ export function OverviewPage() {
             <Button asChild size="sm" variant="primary">
               <Link href="/inbox">
                 <Inbox className="size-3.5" aria-hidden />
-                Abrir Inbox
+                Abrir conversas
               </Link>
             </Button>
           </>

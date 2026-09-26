@@ -11,6 +11,8 @@ import {
   Ellipsis,
   Flag,
   PanelRight,
+  PanelRightClose,
+  PanelRightOpen,
   Play,
   RotateCcw,
   Ticket,
@@ -22,7 +24,7 @@ import { toast } from "sonner";
 import { NotFoundContent } from "@/components/shared/not-found-content";
 import { ChannelIcon, StateBadge, StoreDot, storeById } from "@/components/shared/domain";
 import { Button } from "@/components/ui/button";
-import { Callout } from "@/components/ui/data";
+import { Avatar, Callout } from "@/components/ui/data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +44,7 @@ import type { Conversation, MessageItem, Priority } from "@/lib/demo/types";
 import { formatClock } from "@/lib/format";
 import { Composer, type ComposerSeed } from "./composer";
 import { CustomerPanel } from "./customer-panel";
+import { useInbox } from "./inbox-shell";
 import { Timeline } from "./timeline";
 import { TransferDialog } from "./transfer-dialog";
 
@@ -258,7 +261,8 @@ function HeaderActions({ conversation, onTransfer }: { conversation: Conversatio
 }
 
 export function ConversationView({ id }: { id: string }) {
-  const { actions } = useDemo();
+  const { state, actions } = useDemo();
+  const { listHref } = useInbox();
   const dataset = useDataset();
   const conversation = dataset.conversations.find((c) => c.id === id);
   const hiddenByStore = !conversation && dataset.allConversations.find((c) => c.id === id);
@@ -334,10 +338,11 @@ export function ConversationView({ id }: { id: string }) {
       <section className="flex min-h-0 min-w-0 flex-1 flex-col" aria-label={`Conversa com ${customer?.name ?? "cliente"}`}>
         <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
           <Button asChild size="icon-sm" variant="ghost" className="lg:hidden">
-            <Link href="/inbox" aria-label="Voltar para a lista de conversas">
+            <Link href={listHref} aria-label="Voltar para a lista de conversas">
               <ArrowLeft className="size-4" />
             </Link>
           </Button>
+          <Avatar name={customer?.name ?? "Cliente"} className="hidden sm:inline-flex" />
           <div className="min-w-0 grow basis-60">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="truncate text-[15px] font-semibold text-ink">{customer?.name}</h2>
@@ -359,6 +364,18 @@ export function ConversationView({ id }: { id: string }) {
             <Tooltip content="Dados do cliente">
               <Button size="icon-sm" variant="ghost" className="xl:hidden" onClick={() => setPanelOpen(true)} aria-label="Abrir dados do cliente">
                 <PanelRight className="size-4" />
+              </Button>
+            </Tooltip>
+            <Tooltip content={state.contactPanelOpen ? "Recolher painel do cliente" : "Mostrar painel do cliente"}>
+              <Button
+                size="icon-sm"
+                variant={state.contactPanelOpen ? "subtle" : "ghost"}
+                className="hidden xl:inline-flex"
+                onClick={() => actions.setContactPanelOpen(!state.contactPanelOpen)}
+                aria-pressed={state.contactPanelOpen}
+                aria-label="Painel do cliente e dos pedidos"
+              >
+                {state.contactPanelOpen ? <PanelRightClose className="size-4" /> : <PanelRightOpen className="size-4" />}
               </Button>
             </Tooltip>
           </div>
@@ -390,9 +407,11 @@ export function ConversationView({ id }: { id: string }) {
         </div>
       </section>
 
-      <aside className="hidden w-[320px] shrink-0 overflow-y-auto border-l border-line bg-surface scrollbar-thin xl:block" aria-label="Dados do cliente">
-        {panel}
-      </aside>
+      {state.contactPanelOpen && (
+        <aside className="hidden w-[320px] shrink-0 overflow-y-auto border-l border-line bg-surface scrollbar-thin xl:block" aria-label="Dados do cliente">
+          {panel}
+        </aside>
+      )}
 
       <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
         <SheetContent title="Dados do cliente" width="w-[min(100vw,380px)]">
